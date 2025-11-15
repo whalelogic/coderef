@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Functions</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">Python Functions</h1>
+            <p class="subtitle">A guide to defining and using functions, understanding arguments, and leveraging advanced features like lambdas and decorators.</p>
+            <p>Functions are a fundamental building block in Python. They are reusable blocks of code that perform a specific task. Defining functions allows you to organize your code, make it more readable, and avoid repetition.</p>
+
+            <h2 class="title is-3">1. Defining and Calling a Function</h2>
+            <p>You define a function using the <code>def</code> keyword, followed by a function name, a set of parentheses for arguments, and a colon. The code block within the function is indented.</p>
+            <pre><code class="language-python"># A simple function definition
+def greet(name):
+    """This is a docstring. It explains what the function does."""
+    print(f"Hello, {name}!")
+
+# Calling the function
+greet("Alice")  # Output: Hello, Alice!
+</code></pre>
+
+            <h3 class="title is-4">Return Values</h3>
+            <p>Functions can return a value using the <code>return</code> keyword. If a function does not have a <code>return</code> statement, it implicitly returns <code>None</code>.</p>
+            <pre><code class="language-python">def add(a, b):
+    """Returns the sum of two numbers."""
+    return a + b
+
+result = add(5, 3)
+print(f"The result is: {result}") # Output: The result is: 8
+
+# A function can return multiple values (as a tuple)
+def get_user_info():
+    return "Alice", 30, "alice@example.com"
+
+name, age, email = get_user_info()
+print(f"Name: {name}, Age: {age}")
+</code></pre>
+
+            <h2 class="title is-3">2. Function Arguments</h2>
+            <p>Python offers a flexible way to handle function arguments.</p>
+
+            <h3 class="title is-4">Positional and Keyword Arguments</h3>
+            <p>Arguments can be passed by position or by name (keyword).</p>
+            <pre><code class="language-python">def describe_pet(animal_type, pet_name):
+    """Displays information about a pet."""
+    print(f"I have a {animal_type} named {pet_name}.")
+
+# Positional arguments (order matters)
+describe_pet("hamster", "Harry")
+
+# Keyword arguments (order doesn't matter)
+describe_pet(pet_name="Willie", animal_type="dog")
+</code></pre>
+
+            <h3 class="title is-4">Default Arguments</h3>
+            <p>You can provide a default value for an argument. Arguments with default values must come after any arguments without default values.</p>
+            <pre><code class="language-python">def describe_pet(pet_name, animal_type="dog"):
+    """Displays information about a pet with a default animal type."""
+    print(f"I have a {animal_type} named {pet_name}.")
+
+describe_pet("Willie") # Uses the default animal_type
+describe_pet("Fluffy", "cat") # Overrides the default
+</code></pre>
+
+            <h3 class="title is-4">Arbitrary Arguments: <code>*args</code> and <code>**kwargs</code></h3>
+            <p><code>*args</code> allows you to pass a variable number of positional arguments, which are collected into a tuple. <code>**kwargs</code> allows you to pass a variable number of keyword arguments, which are collected into a dictionary.</p>
+            <pre><code class="language-python">def make_pizza(size, *toppings):
+    """Summarizes the pizza being ordered."""
+    print(f"\nMaking a {size}-inch pizza with the following toppings:")
+    for topping in toppings:
+        print(f"- {topping}")
+
+make_pizza(12, "mushrooms", "green peppers", "extra cheese")
+
+def build_profile(first, last, **user_info):
+    """Builds a dictionary containing everything we know about a user."""
+    user_info['first_name'] = first
+    user_info['last_name'] = last
+    return user_info
+
+user_profile = build_profile('albert', 'einstein',
+                             location='princeton',
+                             field='physics')
+print(user_profile)
+</code></pre>
+
+            <h2 class="title is-3">3. Lambda Functions</h2>
+            <p>A lambda function is a small, anonymous function defined with the <code>lambda</code> keyword. It can take any number of arguments but can only have one expression. They are often used for short, throwaway functions.</p>
+            <pre><code class="language-python"># A lambda function that adds two numbers
+add = lambda x, y: x + y
+print(add(5, 3)) # 8
+
+# Lambdas are commonly used with higher-order functions like map() and filter()
+numbers = [1, 2, 3, 4, 5]
+squared = list(map(lambda x: x**2, numbers))
+print(squared) # [1, 4, 9, 16, 25]
+
+evens = list(filter(lambda x: x % 2 == 0, numbers))
+print(evens) # [2, 4]
+</code></pre>
+            <div class="notification is-info">
+                <strong>Best Practice:</strong> Lambdas are great for simple, one-line functions. If your logic is more complex, it's better to define a regular function with <code>def</code> for readability.
+            </div>
+
+            <h2 class="title is-3">4. Type Hinting (Python 3.5+)</h2>
+            <p>Type hints allow you to indicate the expected types for function arguments and return values. They do not enforce types but are extremely useful for static analysis tools, IDEs, and code readability.</p>
+            <pre><code class="language-python">def greet(name: str) -> None:
+    """Greets a person by name."""
+    print(f"Hello, {name}")
+
+def add(a: int, b: int) -> int:
+    """Adds two integers and returns the result."""
+    return a + b
+
+# Type hints improve clarity and allow tools to catch potential errors
+greet("Alice")
+# greet(123) # A static type checker would flag this as an error
+</code></pre>
+
+            <h2 class="title is-3">5. Docstrings</h2>
+            <p>A docstring is a string literal that occurs as the first statement in a module, function, class, or method definition. It is used to document what the code does.</p>
+            <pre><code class="language-python">def calculate_average(numbers: list[float]) -> float:
+    """Calculates the average of a list of numbers.
+
+    Args:
+        numbers: A list of floating-point numbers.
+
+    Returns:
+        The average of the numbers. Returns 0 if the list is empty.
+    """
+    if not numbers:
+        return 0.0
+    return sum(numbers) / len(numbers)
+
+# You can access the docstring using the __doc__ attribute
+print(calculate_average.__doc__)
+</code></pre>
+        </div>
+    </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

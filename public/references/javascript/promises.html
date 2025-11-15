@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Promises</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">JavaScript Promises</h1>
+            <p class="subtitle">Master asynchronous programming with Promises, chaining, error handling, and modern async patterns.</p>
+
+            <p>A <strong>Promise</strong> is an object representing the eventual completion or failure of an asynchronous operation. It allows you to write asynchronous code that is more readable and manageable than traditional callback-based approaches, helping you avoid "callback hell."</p>
+
+            <h2 class="title is-3">1. The Basics of a Promise</h2>
+            <p>A Promise can be in one of three states:</p>
+            <ul>
+                <li><strong>Pending:</strong> The initial state; the operation has not completed yet.</li>
+                <li><strong>Fulfilled:</strong> The operation completed successfully, and the Promise has a resulting value.</li>
+                <li><strong>Rejected:</strong> The operation failed, and the Promise has a reason for the failure.</li>
+            </ul>
+            <p>You create a new Promise using the <code>new Promise()</code> constructor, which takes a function (the "executor") with two parameters: <code>resolve</code> and <code>reject</code>.</p>
+            <pre><code class="language-javascript">// 1. Creating a Promise
+const myPromise = new Promise((resolve, reject) => {
+    console.log("Promise started...");
+    setTimeout(() => {
+        const success = true;
+        if (success) {
+            resolve("Operation successful!"); // Fulfills the promise
+        } else {
+            reject("Operation failed!"); // Rejects the promise
+        }
+    }, 1000);
+});
+
+// 2. Consuming a Promise
+myPromise
+    .then(result => {
+        // This block runs if the promise is fulfilled
+        console.log("Fulfilled:", result);
+    })
+    .catch(error => {
+        // This block runs if the promise is rejected
+        console.error("Rejected:", error);
+    })
+    .finally(() => {
+        // This block runs regardless of success or failure
+        console.log("Cleanup complete.");
+    });
+</code></pre>
+
+            <h2 class="title is-3">2. Promise Chaining</h2>
+            <p>The real power of Promises comes from chaining. The <code>.then()</code> method itself returns a new Promise, allowing you to chain multiple asynchronous operations together in a readable, sequential manner.</p>
+            <pre><code class="language-javascript">// Each .then() in the chain receives the resolved value of the previous one.
+Promise.resolve(10)
+    .then(value => {
+        console.log("Step 1:", value); // 10
+        return value * 2; // This value is passed to the next .then()
+    })
+    .then(value => {
+        console.log("Step 2:", value); // 20
+        // You can also return a new Promise
+        return new Promise(resolve => setTimeout(() => resolve(value + 5), 500));
+    })
+    .then(value => {
+        console.log("Step 3 (after delay):", value); // 25
+    })
+    .catch(error => {
+        console.error("An error occurred in the chain:", error);
+    });
+</code></pre>
+            <div class="notification is-info">
+                <strong>Key Insight:</strong> A flat chain of <code>.then()</code> calls is much more readable and maintainable than nested callbacks. Always return a value or a new Promise from within a <code>.then()</code> block to continue the chain.
+            </div>
+
+            <h2 class="title is-3">3. Error Handling</h2>
+            <p>A single <code>.catch()</code> at the end of a Promise chain can handle any rejection that occurs in any of the preceding steps. This makes error handling clean and centralized.</p>
+            <pre><code class="language-javascript">function riskyOperation() {
+    return new Promise((resolve, reject) => {
+        if (Math.random() > 0.5) {
+            resolve("Success!");
+        } else {
+            reject(new Error("Something went wrong!"));
+        }
+    });
+}
+
+riskyOperation()
+    .then(result => {
+        console.log("Processing result...");
+        // This next line could also throw an error
+        return JSON.parse(result); // This will fail since result is not JSON
+    })
+    .then(data => console.log("Data processed:", data))
+    .catch(error => {
+        // This catches the rejection from riskyOperation() OR the error from JSON.parse()
+        console.error("Caught an error:", error.message);
+    });
+</code></pre>
+
+            <h2 class="title is-3">4. Promise Combinators</h2>
+            <p>JavaScript provides several static methods on the <code>Promise</code> object to handle multiple Promises at once.</p>
+
+            <h3 class="title is-4"><code>Promise.all()</code></h3>
+            <p>Waits for all Promises in an array to fulfill, and then resolves with an array of their results. If <strong>any</strong> of the Promises reject, <code>Promise.all()</code> immediately rejects with the reason of the first one that rejected.</p>
+            <pre><code class="language-javascript">// Use case: Fetching multiple resources in parallel
+const promise1 = fetch('/api/users');
+const promise2 = fetch('/api/settings');
+
+Promise.all([promise1, promise2])
+    .then(([usersResponse, settingsResponse]) => {
+        return Promise.all([usersResponse.json(), settingsResponse.json()]);
+    })
+    .then(([users, settings]) => {
+        console.log("Both users and settings are loaded:", { users, settings });
+    })
+    .catch(error => {
+        console.error("One of the requests failed:", error);
+    });
+</code></pre>
+
+            <h3 class="title is-4"><code>Promise.race()</code></h3>
+            <p>Waits for the first Promise in an array to either fulfill or reject, and then resolves or rejects with that Promise's value or reason.</p>
+            <pre><code class="language-javascript">// Use case: Implementing a timeout for a network request
+function fetchWithTimeout(url, duration) {
+    const fetchPromise = fetch(url);
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out')), duration)
+    );
+
+    return Promise.race([fetchPromise, timeoutPromise]);
+}
+
+fetchWithTimeout('/api/slow-data', 2000)
+    .then(response => response.json())
+    .then(data => console.log("Data received:", data))
+    .catch(error => console.error(error.message)); // "Request timed out"
+</code></pre>
+
+            <h3 class="title is-4"><code>Promise.allSettled()</code></h3>
+            <p>Waits for all Promises in an array to settle (either fulfill or reject). It always fulfills with an array of objects describing the outcome of each Promise. This is useful when you need to know the result of every Promise, regardless of whether it was successful.</p>
+            <pre><code class="language-javascript">const promises = [
+    Promise.resolve("Success!"),
+    Promise.reject("Failure!"),
+    Promise.resolve("Another success!")
+];
+
+Promise.allSettled(promises)
+    .then(results => {
+        results.forEach(result => {
+            if (result.status === 'fulfilled') {
+                console.log('Fulfilled with value:', result.value);
+            } else {
+                console.log('Rejected with reason:', result.reason);
+            }
+        });
+    });
+</code></pre>
+
+            <h3 class="title is-4"><code>Promise.any()</code></h3>
+            <p>Waits for the first Promise in an array to fulfill. If all Promises reject, it rejects with an <code>AggregateError</code> containing all the rejection reasons.</p>
+            <pre><code class="language-javascript">// Use case: Fetching a resource from multiple mirrors/endpoints
+const mirror1 = fetch('https://mirror1.example.com/data').catch(e => e);
+const mirror2 = fetch('https://mirror2.example.com/data').catch(e => e);
+
+Promise.any([mirror1, mirror2])
+    .then(response => {
+        console.log("Got a response from the fastest mirror:", response.url);
+        return response.json();
+    })
+    .then(data => console.log("Data:", data))
+    .catch(error => {
+        console.error("All mirrors failed to respond.", error);
+    });
+</code></pre>
+
+            <h2 class="title is-3">5. From Promises to Async/Await</h2>
+            <p><code>async/await</code> is modern syntax built on top of Promises that makes asynchronous code look and feel more like synchronous code, further improving readability.</p>
+            <pre><code class="language-javascript">// Promise chaining
+function getUserDataPromise(id) {
+    return fetch(`/api/user/${id}`)
+        .then(response => response.json())
+        .then(user => console.log(user.name))
+        .catch(error => console.error(error));
+}
+
+// Equivalent with Async/Await
+async function getUserDataAsync(id) {
+    try {
+        const response = await fetch(`/api/user/${id}`);
+        const user = await response.json();
+        console.log(user.name);
+    } catch (error) {
+        console.error(error);
+    }
+}
+</code></pre>
+            <div class="notification is-warning">
+                <strong>Best Practice:</strong> Prefer <code>async/await</code> for writing asynchronous logic as it is often more intuitive and easier to debug than long Promise chains. However, a solid understanding of Promises is crucial, as <code>async/await</code> is just syntactic sugar over them.
+            </div>
+
+            <h2 class="title is-3">6. Common Pitfalls & Best Practices</h2>
+            <div class="notification is-info">
+                <ul>
+                    <li><strong>Always handle errors:</strong> Every Promise chain should end with a <code>.catch()</code> or be wrapped in a <code>try...catch</code> block inside an <code>async</code> function. Unhandled Promise rejections can crash Node.js applications.</li>
+                    <li><strong>Return from <code>.then()</code>:</strong> Always <code>return</code> a value or another Promise from a <code>.then()</code> block to maintain a proper chain.</li>
+                    <li><strong>Avoid the "Promise constructor anti-pattern":</strong> Don't wrap already-existing Promises in a <code>new Promise()</code>. If a function already returns a Promise, just use it directly.</li>
+                    <li><strong>Use <code>Promise.all()</code> for parallelism:</strong> When you need to run multiple independent asynchronous operations, run them in parallel with <code>Promise.all()</code> for better performance.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

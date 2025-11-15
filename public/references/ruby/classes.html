@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruby Classes and Objects</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">Ruby Classes and Objects</h1>
+            <p class="subtitle">An introduction to Ruby's object-oriented features, including classes, inheritance, and modules.</p>
+            <p>In Ruby, everything is an object. A <strong>class</strong> is a blueprint from which individual objects are created. Classes define the attributes (data) and methods (behavior) that their objects will have.</p>
+
+            <h2 class="title is-3">1. Defining a Class</h2>
+            <p>You define a class using the <code>class</code> keyword. The <code>initialize</code> method is a special method, the constructor, which is called when a new object is created with <code>.new</code>.</p>
+            <pre><code class="language-ruby">class Person
+  # The constructor, called when Person.new is invoked.
+  def initialize(name, age)
+    # Instance variables hold data for a specific object.
+    @name = name
+    @age = age
+  end
+  
+  # An instance method, which defines the object's behavior.
+  def introduce
+    "Hi, I'm #{@name} and I'm #{@age} years old."
+  end
+end
+
+# Create a new object (an instance of the Person class)
+person = Person.new("Alice", 30)
+puts person.introduce #=> Hi, I'm Alice and I'm 30 years old.
+</code></pre>
+
+            <h2 class="title is-3">2. Attribute Accessors</h2>
+            <p>To allow access to instance variables from outside the object, Ruby provides convenient "accessor" methods. Instead of writing getter and setter methods manually, you can use these shortcuts.</p>
+            <pre><code class="language-ruby">class Person
+  # attr_reader: Creates a getter method.
+  attr_reader :id
+  
+  # attr_writer: Creates a setter method.
+  attr_writer :secret
+  
+  # attr_accessor: Creates both a getter and a setter method.
+  attr_accessor :name, :age
+  
+  def initialize(name, age)
+    @name = name
+    @age = age
+    @id = rand(1000) # A random ID for this instance
+  end
+end
+
+person = Person.new("Bob", 25)
+
+# Use the getter created by attr_accessor
+puts person.name #=> "Bob"
+
+# Use the setter created by attr_accessor
+person.age = 26
+puts person.age #=> 26
+
+# The ID can only be read
+puts person.id #=> (some random number)
+# person.id = 123 #=> NoMethodError: undefined method `id='
+
+# The secret can only be written
+person.secret = "shhh"
+# puts person.secret #=> NoMethodError: undefined method `secret'
+</code></pre>
+
+            <h2 class="title is-3">3. Class Variables and Methods</h2>
+            <p>Class variables (<code>@@</code>) are shared among all instances of a class. Class methods (defined with <code>self.</code>) belong to the class itself, not to individual objects.</p>
+            <pre><code class="language-ruby">class Counter
+  # A class variable, shared by all instances.
+  @@total_instances = 0
+  
+  def initialize
+    # Increment the class variable every time a new object is created.
+    @@total_instances += 1
+  end
+  
+  # A class method, which can be called on the class directly.
+  def self.total_instances
+    @@total_instances
+  end
+end
+
+Counter.new
+Counter.new
+puts Counter.total_instances #=> 2
+</code></pre>
+            <div class="notification is-info">
+                <strong>Best Practice:</strong> Be cautious with class variables (<code>@@</code>). Their state is shared across all instances and even subclasses, which can lead to unexpected behavior. For most cases, instance variables are a safer choice.
+            </div>
+
+            <h2 class="title is-3">4. Inheritance</h2>
+            <p>Inheritance allows a class to inherit behavior from a parent class (or "superclass"). This is a fundamental way to establish relationships between objects and reuse code.</p>
+            <pre><code class="language-ruby">class Animal
+  def initialize(name)
+    @name = name
+  end
+  
+  def speak
+    "#{@name} makes a sound."
+  end
+end
+
+# Dog inherits from Animal using the '<' symbol.
+class Dog < Animal
+  # We can override the parent's method to provide a more specific implementation.
+  def speak
+    "#{@name} barks!"
+  end
+  
+  def fetch
+    "#{@name} is fetching."
+  end
+end
+
+buddy = Dog.new("Buddy")
+puts buddy.speak #=> "Buddy barks!"
+puts buddy.fetch #=> "Buddy is fetching."
+</code></pre>
+
+            <h3 class="title is-4">The `super` Keyword</h3>
+            <p>The <code>super</code> keyword allows you to call a method from the parent class within the child class. It's often used in <code>initialize</code> to extend the parent's constructor rather than replacing it.</p>
+            <pre><code class="language-ruby">class Car < Vehicle
+  def initialize(wheels, brand)
+    # `super` calls the `initialize` method of the Vehicle class.
+    super(wheels)
+    @brand = brand
+  end
+  
+  def info
+    # `super` here calls the `info` method of the Vehicle class.
+    super + " and is a #{@brand}"
+  end
+end
+
+car = Car.new(4, "Toyota")
+puts car.info #=> "This vehicle has 4 wheels and is a Toyota"
+</code></pre>
+
+            <h2 class="title is-3">5. Modules and Mixins</h2>
+            <p>Modules provide a way to group related methods, constants, and classes. One of their most powerful uses is as "mixins" to share functionality between classes without using inheritance.</p>
+            <pre><code class="language-ruby"># A module containing methods related to flying.
+module Flyable
+  def fly
+    "I'm flying!"
+  end
+end
+
+# A module for swimming behavior.
+module Swimmable
+  def swim
+    "I'm swimming!"
+  end
+end
+
+# By including the modules, the Duck class gains their methods.
+class Duck
+  include Flyable
+  include Swimmable
+end
+
+class Fish
+  include Swimmable
+end
+
+duck = Duck.new
+puts duck.fly   #=> "I'm flying!"
+puts duck.swim  #=> "I'm swimming!"
+
+fish = Fish.new
+puts fish.swim  #=> "I'm swimming!"
+# fish.fly #=> NoMethodError
+</code></pre>
+            <div class="notification is-info">
+                <strong>Key Insight:</strong> This "mixin" pattern is a cornerstone of Ruby. It allows for a form of multiple inheritance and is preferred over complex class hierarchies. It promotes writing small, reusable chunks of behavior.
+            </div>
+
+            <h2 class="title is-3">6. Access Control</h2>
+            <p>Ruby provides three levels of access control for methods: <code>public</code>, <code>protected</code>, and <code>private</code>.</p>
+            <ul>
+                <li><strong>Public:</strong> Can be called by anyone. This is the default.</li>
+                <li><strong>Protected:</strong> Can be called by other objects of the same class or subclasses.</li>
+                <li><strong>Private:</strong> Can only be called within the object itself (you cannot specify a receiver like <code>other.private_method</code>).</li>
+            </ul>
+            <pre><code class="language-ruby">class BankAccount
+  def initialize(balance)
+    @balance = balance
+  end
+  
+  # This is a public method.
+  def balance
+    @balance
+  end
+  
+  # All methods defined after this are private.
+  private
+  
+  def secret_code
+    "1234"
+  end
+end
+
+account = BankAccount.new(100)
+puts account.balance #=> 100
+# puts account.secret_code #=> NoMethodError: private method `secret_code' called
+</code></pre>
+        </div>
+    </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

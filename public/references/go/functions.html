@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go Functions</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">Functions in Go</h1>
+            <p class="subtitle is-size-6">Functions are the fundamental building blocks of Go programs. They encapsulate behavior, promote code reuse, and make programs more modular and testable. Go's function system is both simple and powerful, supporting multiple return values, first-class functions, and closures.</p>
+
+            <h2 class="title is-4" id="basic-declaration">1. Basic Function Declaration</h2>
+            <p>Functions in Go are declared using the <code>func</code> keyword. The syntax is explicit and readable, with clear parameter and return type declarations.</p>
+            <pre><code class="language-go">
+package main
+
+import "fmt"
+
+// Basic function with two parameters and one return value
+// Parameters: x and y are both integers
+// Returns: single integer result
+func add(x int, y int) int {
+    return x + y
+}
+
+// When consecutive parameters share the same type,
+// you can omit the repeated type declaration
+func multiply(x, y int) int {
+    return x * y
+}
+
+// Function with no parameters
+// Useful for operations that don't need input
+func greet() {
+    fmt.Println("Hello, World!")
+}
+
+// Function with no return value (void in other languages)
+// The function performs an action but doesn't return data
+func printSum(a, b int) {
+    fmt.Printf("Sum: %d\n", a+b)
+}
+
+func main() {
+    // Call function and store result
+    result := add(5, 3)
+    fmt.Println(result) // Output: 8
+
+    // Call function without parameters
+    greet() // Output: Hello, World!
+
+    // Call function that returns nothing
+    printSum(10, 20) // Output: Sum: 30
+}
+</code></pre>
+
+            <h2 class="title is-4" id="multiple-returns">2. Multiple Return Values</h2>
+            <p>One of Go's most powerful features is the ability to return multiple values from a single function. This is commonly used for error handling, allowing functions to return both a result and an error state.</p>
+            <pre><code class="language-go">
+package main
+
+import (
+    "fmt"
+    "errors"
+)
+
+// Return multiple values: result and error
+// This is the idiomatic Go way to handle errors
+func divide(a, b float64) (float64, error) {
+    // Check for division by zero
+    if b == 0 {
+        // Return zero value and an error
+        return 0, errors.New("division by zero")
+    }
+    // Return the result and nil (no error)
+    return a / b, nil
+}
+
+// Multiple return values of same type
+// Useful for operations like swapping or tuple-like returns
+func swap(x, y string) (string, string) {
+    return y, x  // Returns in reverse order
+}
+
+// Return three values: demonstrates flexibility
+func getUserInfo(id int) (name string, age int, found bool) {
+    // Simulate database lookup
+    if id == 1 {
+        return "Alice", 30, true
+    }
+    return "", 0, false  // Default values when not found
+}
+
+func main() {
+    // Handle both return values
+    result, err := divide(10, 2)
+    if err != nil {
+        fmt.Println("Error:", err)
+    } else {
+        fmt.Println("Result:", result) // Output: Result: 5
+    }
+
+    // Ignore return value with underscore (_)
+    // This explicitly shows you're discarding a value
+    _, err = divide(10, 0)
+    if err != nil {
+        fmt.Println("Error:", err) // Output: Error: division by zero
+    }
+
+    // Swap values in one line
+    a, b := swap("hello", "world")
+    fmt.Println(a, b) // Output: world hello
+
+    // Handle multiple different types
+    name, age, found := getUserInfo(1)
+    if found {
+        fmt.Printf("%s is %d years old\n", name, age)
+    }
+}
+</code></pre>
+
+            <h2 class="title is-4" id="named-returns">3. Named Return Values</h2>
+            <p>Return values can be named and treated as variables defined at the top of the function. This feature can improve code readability, especially in longer functions, but should be used judiciously.</p>
+            <pre><code class="language-go">
+package main
+
+import "fmt"
+
+// Named return values act as pre-declared variables
+// They're automatically initialized to their zero values
+func split(sum int) (x, y int) {
+    x = sum * 4 / 9    // Assign to named return value
+    y = sum - x        // Calculate second value
+    return             // "Naked return" - returns x and y automatically
+}
+
+// Named returns with explicit return (recommended for clarity)
+func rectangle(width, height float64) (area, perimeter float64) {
+    area = width * height
+    perimeter = 2 * (width + height)
+    return area, perimeter  // Explicit return - more clear than naked return
+}
+
+// Named returns are useful for documenting what's returned
+// Especially helpful in functions with multiple return values of same type
+func authenticateUser(username, password string) (userID int, role string, isAdmin bool, err error) {
+    // Simulate authentication
+    if username == "admin" && password == "secret" {
+        userID = 1
+        role = "administrator"
+        isAdmin = true
+        err = nil
+        return  // All named values are returned
+    }
+
+    // On failure, zero values are returned
+    err = fmt.Errorf("authentication failed")
+    return
+}
+
+func main() {
+    // Named returns make the function signature self-documenting
+    x, y := split(17)
+    fmt.Println(x, y) // Output: 7 10
+
+    area, perimeter := rectangle(5, 3)
+    fmt.Printf("Area: %.2f, Perimeter: %.2f\n", area, perimeter)
+
+    // Multiple return values with clear names
+    id, role, admin, err := authenticateUser("admin", "secret")
+    if err == nil {
+        fmt.Printf("User %d with role %s (admin: %v)\n", id, role, admin)
+    }
+}
+</code></pre>
+
+            <h2 class="title is-4" id="variadic-functions">4. Variadic Functions</h2>
+            <p>Variadic functions accept a variable number of arguments. The <code>...</code> syntax allows you to pass zero or more values of the specified type, which are received as a slice within the function.</p>
+            <pre><code class="language-go">
+package main
+
+import (
+    "fmt"
+    "strings"
+)
+
+// Variadic function - accepts any number of integers
+// The ...int syntax means numbers becomes a slice of ints
+func sum(numbers ...int) int {
+    total := 0
+    // Range over the slice of numbers
+    for _, num := range numbers {
+        total += num
+    }
+    return total
+}
+
+// Mix regular and variadic parameters
+// Note: variadic parameter must be last
+func greet(greeting string, names ...string) {
+    for _, name := range names {
+        fmt.Printf("%s, %s!\n", greeting, name)
+    }
+}
+
+// Variadic with different type for flexibility
+func joinWithSeparator(separator string, parts ...string) string {
+    return strings.Join(parts, separator)
+}
+
+// Forwarding variadic parameters to another function
+// Use ... to expand the slice when passing to another variadic function
+func sumAndDouble(numbers ...int) int {
+    return sum(numbers...) * 2  // Expand slice with ...
+}
+
+func main() {
+    // Call with multiple arguments
+    fmt.Println(sum(1, 2, 3, 4, 5)) // Output: 15
+    // Call with no arguments (valid!)
+    fmt.Println(sum()) // Output: 0
+
+    // Variadic with mixed parameters
+    greet("Hello", "Alice", "Bob", "Charlie")
+    // Output:
+    // Hello, Alice!
+    // Hello, Bob!
+    // Hello, Charlie!
+
+    // Passing a slice to variadic function
+    // Use ... to unpack the slice
+    nums := []int{1, 2, 3, 4}
+    fmt.Println(sum(nums...)) // Output: 10
+
+    // Practical example: building strings
+    path := joinWithSeparator("/", "home", "user", "documents")
+    fmt.Println(path) // Output: home/user/documents
+}
+</code></pre>
+
+            <h2 class="title is-4" id="first-class-functions">5. First-Class Functions</h2>
+            <p>In Go, functions are first-class citizens. They can be assigned to variables, passed as arguments to other functions, and returned as values from functions. This enables powerful functional programming patterns.</p>
+            <pre><code class="language-go">
+package main
+
+import "fmt"
+
+func main() {
+    // Assign anonymous function to variable
+    // The function type is inferred from the function literal
+    add := func(a, b int) int {
+        return a + b
+    }
+
+    result := add(5, 3)
+    fmt.Println(result) // Output: 8
+
+    // Pass function as argument to higher-order function
+    numbers := []int{1, 2, 3, 4, 5}
+
+    // Use an anonymous function to double each number
+    doubled := apply(numbers, func(n int) int {
+        return n * 2
+    })
+    fmt.Println(doubled) // Output: [2 4 6 8 10]
+
+    // Use a named function
+    squared := apply(numbers, square)
+    fmt.Println(squared) // Output: [1 4 9 16 25]
+
+    // Function that returns a function
+    double := multiplier(2)
+    triple := multiplier(3)
+
+    fmt.Println(double(5))  // Output: 10
+    fmt.Println(triple(5))  // Output: 15
+}
+
+// Named function that can be passed around
+func square(n int) int {
+    return n * n
+}
+
+// Higher-order function: accepts a function as parameter
+// fn is a function that takes an int and returns an int
+func apply(nums []int, fn func(int) int) []int {
+    result := make([]int, len(nums))
+    for i, n := range nums {
+        result[i] = fn(n)  // Apply the function to each element
+    }
+    return result
+}
+
+// Function that returns a function (function factory)
+// Creates custom multiplier functions on demand
+func multiplier(factor int) func(int) int {
+    // Return an anonymous function that closes over 'factor'
+    return func(n int) int {
+        return n * factor
+    }
+}
+</code></pre>
+
+            <h2 class="title is-4" id="closures">6. Closures</h2>
+            <p>Closures are functions that reference variables from outside their body. The function can access and modify these variables even after the outer function has returned. This creates private state and enables powerful patterns like counters and accumulators.</p>
+            <pre><code class="language-go">
+package main
+
+import "fmt"
+
+// Closure that captures and modifies a variable
+// Each call to counter() creates a new independent counter
+func counter() func() int {
+    count := 0  // This variable is captured by the closure
+    // Return a function that has access to 'count'
+    return func() int {
+        count++  // Modify the captured variable
+        return count
+    }
+}
+
+// Closure with parameters
+// Creates an accumulator starting from 'initial'
+func adder(initial int) func(int) int {
+    sum := initial  // Captured variable maintains state
+    return func(x int) int {
+        sum += x  // Accumulate values
+        return sum
+    }
+}
+
+// More complex closure: a configurable filter
+func makeFilter(threshold int) func([]int) []int {
+    // The returned function remembers the threshold
+    return func(numbers []int) []int {
+        var result []int
+        for _, n := range numbers {
+            if n > threshold {
+                result = append(result, n)
+            }
+        }
+        return result
+    }
+}
+
+func main() {
+    // Each closure has its own independent 'count'
+    c1 := counter()
+    c2 := counter()
+
+    fmt.Println(c1()) // Output: 1
+    fmt.Println(c1()) // Output: 2
+    fmt.Println(c2()) // Output: 1 (independent counter)
+    fmt.Println(c1()) // Output: 3
+
+    // Closure with state (accumulator pattern)
+    acc := adder(0)
+    fmt.Println(acc(5))  // Output: 5
+    fmt.Println(acc(10)) // Output: 15 (5 + 10)
+    fmt.Println(acc(3))  // Output: 18 (15 + 3)
+
+    // Factory pattern with closures
+    filterAbove10 := makeFilter(10)
+    filterAbove50 := makeFilter(50)
+
+    numbers := []int{5, 15, 25, 55, 75}
+    fmt.Println(filterAbove10(numbers)) // Output: [15 25 55 75]
+    fmt.Println(filterAbove50(numbers)) // Output: [55 75]
+}
+</code></pre>
+
+            <h2 class="title is-4" id="defer-panic-recover">7. Defer, Panic, and Recover</h2>
+            <p>Go provides special control flow mechanisms for resource management and error handling.</p>
+            <h3 class="title is-5">Defer</h3>
+            <p>The <code>defer</code> statement schedules a function call to be executed after the surrounding function returns. This is perfect for cleanup operations like closing files, releasing locks, or logging.</p>
+            <pre><code class="language-go">
+package main
+
+import (
+    "fmt"
+    "os"
+)
+
+func main() {
+    // Defer executes after the function returns
+    // Useful for cleanup regardless of how function exits
+    defer fmt.Println("World")
+    fmt.Println("Hello")
+    // Output:
+    // Hello
+    // World
+}
+
+// Multiple defers execute in LIFO (Last In, First Out) order
+// Think of it as a stack - last deferred, first executed
+func example() {
+    defer fmt.Println("1")
+    defer fmt.Println("2")
+    defer fmt.Println("3")
+    fmt.Println("Start")
+    // Output:
+    // Start
+    // 3
+    // 2
+    // 1
+}
+
+// Common use case: ensure resources are cleaned up
+func readFile(path string) error {
+    // Open file
+    file, err := os.Open(path)
+    if err != nil {
+        return err
+    }
+    // Defer close immediately after opening
+    // This ensures the file is closed no matter how the function exits
+    defer file.Close()
+
+    // Work with file...
+    // Even if there's an error here, file.Close() will be called
+    data := make([]byte, 100)
+    _, err = file.Read(data)
+    if err != nil {
+        return err  // file.Close() is still called!
+    }
+
+    return nil
+}
+</code></pre>
+            <h3 class="title is-5">Panic and Recover</h3>
+            <p>Panic stops normal execution and begins panicking. Recover regains control of a panicking goroutine. Use panic for truly exceptional situations; prefer errors for normal error handling.</p>
+            <pre><code class="language-go">
+package main
+
+import "fmt"
+
+// Panic stops normal execution
+// Use sparingly - only for truly unexpected situations
+func riskyOperation() {
+    panic("something went terribly wrong!")
+}
+
+// Recover catches panics (must be called in deferred function)
+// Returns nil if no panic occurred, or the panic value
+func safeDivide(a, b int) (result int) {
+    // Defer a function that recovers from panic
+    defer func() {
+        if r := recover(); r != nil {
+            // Panic occurred - handle it gracefully
+            fmt.Println("Recovered from panic:", r)
+            result = 0  // Set safe default return value
+        }
+    }()
+
+    // This panics if b is 0
+    return a / b
+}
+
+// More sophisticated error recovery
+func safeExecute(fn func()) (err error) {
+    defer func() {
+        if r := recover(); r != nil {
+            // Convert panic to error
+            err = fmt.Errorf("panic occurred: %v", r)
+        }
+    }()
+
+    fn()  // Execute the risky function
+    return nil
+}
+
+func main() {
+    // Division by zero is handled gracefully
+    result := safeDivide(10, 0)
+    fmt.Println("Result:", result) // Output: Recovered from panic: ... Result: 0
+
+    // Program continues after recovery
+    fmt.Println("Program continues normally")
+
+    // Use recover to convert panics to errors
+    err := safeExecute(func() {
+        panic("unexpected error")
+    })
+    if err != nil {
+        fmt.Println("Caught:", err)
+    }
+}
+</code></pre>
+
+            <h2 class="title is-4" id="methods">8. Methods</h2>
+            <p>Methods are functions with a special receiver argument. The receiver appears between <code>func</code> and the method name. Methods allow you to define behavior for custom types.</p>
+            <pre><code class="language-go">
+package main
+
+import (
+    "fmt"
+    "math"
+)
+
+// Define a custom type
+type Rectangle struct {
+    Width, Height float64
+}
+
+type Circle struct {
+    Radius float64
+}
+
+// Method with value receiver
+// The receiver is a copy, so the original struct is not modified
+func (r Rectangle) Area() float64 {
+    return r.Width * r.Height
+}
+
+// Another value receiver method
+func (r Rectangle) Perimeter() float64 {
+    return 2 * (r.Width + r.Height)
+}
+
+// Method with pointer receiver
+// Can modify the receiver (the original struct)
+func (r *Rectangle) Scale(factor float64) {
+    r.Width *= factor   // Modifies the original
+    r.Height *= factor
+}
+
+// Circle methods
+func (c Circle) Area() float64 {
+    return math.Pi * c.Radius * c.Radius
+}
+
+func (c Circle) Circumference() float64 {
+    return 2 * math.Pi * c.Radius
+}
+
+// Pointer receiver for modification
+func (c *Circle) Grow(amount float64) {
+    c.Radius += amount
+}
+
+func main() {
+    rect := Rectangle{Width: 10, Height: 5}
+
+    // Call methods using dot notation
+    fmt.Println("Area:", rect.Area())         // Output: Area: 50
+    fmt.Println("Perimeter:", rect.Perimeter()) // Output: Perimeter: 30
+
+    // Modify through pointer receiver
+    rect.Scale(2)  // Go automatically takes address when needed
+    fmt.Println("Scaled Area:", rect.Area())   // Output: Scaled Area: 200
+
+    // Circle example
+    circle := Circle{Radius: 5}
+    fmt.Println("Circle Area:", circle.Area())
+    circle.Grow(2)
+    fmt.Println("Grown Circle Area:", circle.Area())
+}
+</code></pre>
+            <h2 class="title is-4" id="best-practices">9. Best Practices</h2>
+            <ul>
+                <li><strong>Keep functions small and focused</strong> - Adhere to the single responsibility principle.</li>
+                <li><strong>Use multiple return values for errors</strong> - Follow the idiomatic <code>(value, error)</code> pattern.</li>
+                <li><strong>Name return values for clarity</strong> - Especially useful in complex functions to act as documentation.</li>
+                <li><strong>Use defer for cleanup</strong> - Reliably close files, unlock mutexes, and handle other resource cleanup.</li>
+                <li><strong>Use pointer receivers for methods that modify state</strong> - Use value receivers for read-only methods.</li>
+                <li><strong>Accept interfaces, return structs</strong> - A common Go proverb that promotes flexible and decoupled code.</li>
+                <li><strong>Use variadic functions judiciously</strong> - They offer flexibility but can sometimes obscure the required arguments.</li>
+                <li><strong>Document exported functions</strong> - Write a comment starting with the function name to explain its purpose.</li>
+                <li><strong>Avoid naked returns in long functions</strong> - While concise, they can make the return logic harder to follow.</li>
+                <li><strong>Use closures for encapsulation</strong> - Create factory functions or manage private state effectively.</li>
+            </ul>
+        </div>
+    </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

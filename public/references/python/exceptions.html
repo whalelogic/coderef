@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Exception Handling</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">Python Exception Handling</h1>
+            <p class="subtitle">A guide to handling errors and exceptions gracefully using `try`, `except`, `else`, and `finally`.</p>
+            <p>Exception handling is a critical part of writing robust and reliable Python code. It allows you to manage errors and exceptional situations without crashing your program.</p>
+
+            <h2 class="title is-3">1. The `try...except` Block</h2>
+            <p>The core of exception handling is the <code>try...except</code> block. Python places code that might raise an exception inside the <code>try</code> block. If an error occurs, the code inside the <code>except</code> block is executed.</p>
+            <pre><code class="language-python">try:
+    # Code that might cause an error
+    numerator = 10
+    denominator = 0
+    result = numerator / denominator
+    print(result)
+except ZeroDivisionError:
+    # Code that runs if a ZeroDivisionError occurs
+    print("Error: Cannot divide by zero!")
+
+print("Execution continues after the try...except block.")
+</code></pre>
+
+            <h3 class="title is-4">Handling Multiple Exceptions</h3>
+            <p>You can handle different types of exceptions in different ways by adding more <code>except</code> blocks.</p>
+            <pre><code class="language-python">my_dict = {"a": 1, "b": 2}
+
+try:
+    value = my_dict["c"]
+    result = 10 / 0
+except KeyError:
+    print("Error: That key does not exist in the dictionary.")
+except ZeroDivisionError:
+    print("Error: Cannot divide by zero.")
+
+# You can also handle multiple exceptions in a single block
+try:
+    # ... some code ...
+    pass
+except (KeyError, IndexError) as e:
+    print(f"A lookup error occurred: {e}")
+</code></pre>
+
+            <h2 class="title is-3">2. The `else` and `finally` Clauses</h2>
+            <p>The <code>try...except</code> block can be extended with optional <code>else</code> and <code>finally</code> clauses.</p>
+            <ul>
+                <li>The <strong><code>else</code></strong> block runs only if <strong>no exceptions</strong> were raised in the <code>try</code> block.</li>
+                <li>The <strong><code>finally</code></strong> block runs <strong>no matter what</strong>, whether an exception occurred or not. It is typically used for cleanup actions.</li>
+            </ul>
+            <pre><code class="language-python">def divide(a, b):
+    try:
+        result = a / b
+    except ZeroDivisionError:
+        print("Error: Division by zero is not allowed.")
+    else:
+        # This runs only if the division was successful
+        print(f"Result is {result}")
+    finally:
+        # This runs every time, regardless of an exception
+        print("Division operation finished.")
+
+divide(10, 2)
+print("-" * 20)
+divide(10, 0)
+</code></pre>
+
+            <h2 class="title is-3">3. Raising Exceptions</h2>
+            <p>You can raise your own exceptions using the <code>raise</code> keyword. This is useful when a certain condition is not met in your code.</p>
+            <pre><code class="language-python">def set_age(age):
+    if age < 0:
+        # Raise an exception if the age is invalid
+        raise ValueError("Age cannot be negative.")
+    print(f"Age set to {age}")
+
+try:
+    set_age(25)
+    set_age(-5)
+except ValueError as e:
+    print(f"Error setting age: {e}")
+</code></pre>
+
+            <h2 class="title is-3">4. Custom Exceptions</h2>
+            <p>For more specific error handling, you can create your own custom exception classes by inheriting from Python's base <code>Exception</code> class. This makes your code more readable and allows you to catch specific errors related to your application's logic.</p>
+            <pre><code class="language-python"># Define a custom exception class
+class InsufficientFundsError(Exception):
+    """Raised when a withdrawal amount exceeds the account balance."""
+    pass
+
+class BankAccount:
+    def __init__(self, balance):
+        self.balance = balance
+
+    def withdraw(self, amount):
+        if amount > self.balance:
+            # Raise the custom exception
+            raise InsufficientFundsError(f"Cannot withdraw ${amount}, only ${self.balance} available.")
+        self.balance -= amount
+        return self.balance
+
+account = BankAccount(100)
+try:
+    account.withdraw(50)
+    print(f"New balance: ${account.balance}")
+    account.withdraw(80) # This will raise the custom exception
+except InsufficientFundsError as e:
+    print(f"Transaction failed: {e}")
+</code></pre>
+            <div class="notification is-info">
+                <strong>Best Practice:</strong> Creating custom exceptions makes your error handling more specific and your program's intent clearer. It's better to catch a specific <code>InsufficientFundsError</code> than a generic <code>Exception</code>.
+            </div>
+
+            <h2 class="title is-3">5. Best Practices for Exception Handling</h2>
+            <ul>
+                <li><strong>Be specific in your <code>except</code> blocks.</strong> Avoid catching the base <code>Exception</code> class, as it can hide bugs. Catch the specific errors you expect.</li>
+                <li><strong>Don't suppress exceptions silently.</strong> Unless you have a very good reason, don't use a bare <code>except: pass</code>. At a minimum, log the error.</li>
+                <li><strong>Use <code>finally</code> for cleanup.</strong> Ensure that resources like files or network connections are closed, regardless of whether an error occurred.</li>
+                <li><strong>Create custom exceptions for your application.</strong> This makes your error-handling logic more robust and easier to understand.</li>
+                <li><strong>Keep <code>try</code> blocks small.</strong> Only wrap the specific lines of code that might raise an exception.</li>
+            </ul>
+        </div>
+    </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

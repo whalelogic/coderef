@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Go Variables</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <section class="section">
+        <div class="content">
+          <h1 class="title">Variables in Go</h1>
+
+          <p>
+            Go is a statically typed language, meaning variable types are
+            determined at compile time. This provides type safety and helps
+            catch errors early. Understanding Go's variable system is
+            fundamental to writing efficient, maintainable code.
+          </p>
+
+          <h2 class="subtitle">Variable Declaration Basics</h2>
+
+          <p>
+            In Go, there are multiple ways to declare variables, each suited for
+            different scenarios. The <code>var</code> keyword is the most
+            explicit form and can be used at both package and function level.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import "fmt"
+
+// Package-level variable (accessible throughout the package)
+var globalCounter int = 0
+
+func main() {
+    // Basic variable declaration with explicit type
+    var name string
+    name = "Gopher"
+    fmt.Println("Hello,", name)
+
+    // Declaration with initialization (type inference)
+    var age = 25  // Go infers this is an int
+    fmt.Println("Age:", age)
+
+    // Multiple variables of same type
+    var x, y, z int = 1, 2, 3
+    fmt.Println("Coordinates:", x, y, z)
+
+    // Multiple variables of different types
+    var (
+        username string = "admin"
+        isActive bool   = true
+        loginCount int  = 42
+    )
+    fmt.Printf("User: %s, Active: %v, Logins: %d\n", 
+        username, isActive, loginCount)
+}</code></pre>
+
+          <p>
+            <strong>Key Insight:</strong> When you declare a variable without
+            initializing it, Go automatically assigns it a <em>zero value</em>.
+            For numeric types, this is <code>0</code>; for booleans, it's
+            <code>false</code>; for strings, it's <code>""</code> (empty
+            string); and for pointers, slices, maps, channels, functions, and
+            interfaces, it's <code>nil</code>.
+          </p>
+
+          <h2 class="subtitle">Short Variable Declaration</h2>
+
+          <p>
+            Inside functions, Go offers a shorthand syntax using
+            <code>:=</code> which combines declaration and initialization. This
+            is the most common way to declare variables in Go code because it's
+            concise and lets the compiler infer the type.
+          </p>
+
+          <pre><code class="language-go">func processData() {
+    // Short declaration - type inferred from right side
+    language := "Go"           // string
+    version := 1.21            // float64 (default for decimals)
+    isStable := true           // bool
+    users := 1_000_000         // int (underscores improve readability)
+
+    fmt.Printf("%s v%.2f, Stable: %v, Users: %d\n", 
+        language, version, isStable, users)
+
+    // Multiple assignment
+    firstName, lastName := "John", "Doe"
+    fmt.Printf("Name: %s %s\n", firstName, lastName)
+
+    // Reassignment with existing variables (at least one must be new)
+    firstName, age := "Jane", 30  // firstName reused, age is new
+    fmt.Printf("Updated: %s, Age: %d\n", firstName, age)
+}</code></pre>
+
+          <p>
+            <strong>Important Limitations:</strong> The <code>:=</code> operator
+            can only be used <em>inside functions</em>. At package level, you
+            must use the <code>var</code> keyword. Also, when using
+            <code>:=</code> with multiple variables, at least one variable on
+            the left side must be newly declared.
+          </p>
+
+          <h2 class="subtitle">Type Inference vs Explicit Types</h2>
+
+          <p>
+            Go's type inference is powerful but sometimes you need explicit
+            types for clarity, precision, or to match specific interfaces.
+            Understanding when to use each approach is crucial.
+          </p>
+
+          <pre><code class="language-go">func demonstrateTypes() {
+    // Type inference - Go chooses default types
+    defaultInt := 42        // int (not int32 or int64)
+    defaultFloat := 3.14    // float64 (not float32)
+    defaultComplex := 1 + 2i // complex128
+
+    fmt.Printf("Default int type: %T\n", defaultInt)       // int
+    fmt.Printf("Default float type: %T\n", defaultFloat)   // float64
+    fmt.Printf("Default complex type: %T\n", defaultComplex) // complex128
+
+    // Explicit types for precision or compatibility
+    var smallInt int8 = 127              // Range: -128 to 127
+    var largeInt int64 = 9223372036854775807  // Much larger range
+    var precise float32 = 3.14159       // Less memory than float64
+    var userID uint = 12345             // Only positive numbers
+
+    // Explicit type needed when default doesn't match requirements
+    var bytes []byte = []byte("Hello")  // Commonly used for binary data
+    var char rune = 'A'                 // Single Unicode character
+
+    fmt.Printf("Small int: %d (type: %T)\n", smallInt, smallInt)
+    fmt.Printf("Large int: %d (type: %T)\n", largeInt, largeInt)
+    fmt.Printf("Precise float: %.5f (type: %T)\n", precise, precise)
+    fmt.Printf("User ID: %d (type: %T)\n", userID, userID)
+    fmt.Printf("Character: %c (Unicode: %d)\n", char, char)
+}</code></pre>
+
+          <p>
+            <strong>Best Practice:</strong> Use type inference (with
+            <code>:=</code>) for local variables when the type is obvious from
+            context. Use explicit types when you need a specific size (like
+            <code>int32</code>), when interfacing with external systems, or when
+            the type might not be immediately clear to readers.
+          </p>
+
+          <h2 class="subtitle">Constants</h2>
+
+          <p>
+            Constants in Go are immutable values defined at compile time.
+            They're more efficient than variables because their values are known
+            before the program runs, allowing the compiler to optimize their
+            usage.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import "fmt"
+
+// Untyped constants (more flexible)
+const (
+    Pi      = 3.14159265359
+    E       = 2.71828182846
+    MaxSize = 1000
+)
+
+// Typed constants (type-safe)
+const (
+    StatusOK       int    = 200
+    StatusNotFound int    = 404
+    AppName        string = "MyApp"
+    DebugMode      bool   = false
+)
+
+// Constants with iota (auto-incrementing values)
+const (
+    Sunday = iota    // 0
+    Monday           // 1
+    Tuesday          // 2
+    Wednesday        // 3
+    Thursday         // 4
+    Friday           // 5
+    Saturday         // 6
+)
+
+// More complex iota patterns
+const (
+    _  = iota             // Skip zero value
+    KB = 1 << (10 * iota) // 1 << 10 = 1024
+    MB                    // 1 << 20 = 1048576
+    GB                    // 1 << 30 = 1073741824
+)
+
+func main() {
+    // Untyped constants can be used flexibly
+    var radius float32 = 5.0
+    area := Pi * radius * radius  // Pi adapts to float32
+    fmt.Printf("Circle area: %.2f\n", area)
+
+    // Typed constants are type-safe
+    var httpCode int = StatusOK
+    fmt.Printf("HTTP Status: %d\n", httpCode)
+
+    // Using iota
+    today := Wednesday
+    fmt.Printf("Day of week: %d\n", today)
+
+    // File size constants
+    fileSize := 500 * MB
+    fmt.Printf("File size: %d bytes (%.2f MB)\n", fileSize, float64(fileSize)/float64(MB))
+}</code></pre>
+
+          <p>
+            <strong>Why Use Constants:</strong> Constants provide type safety,
+            improve code readability (meaningful names instead of magic
+            numbers), and enable compiler optimizations. The
+            <code>iota</code> identifier is especially useful for creating
+            enumerations and patterns without manual numbering.
+          </p>
+
+          <h2 class="subtitle">Zero Values and Initialization</h2>
+
+          <p>
+            Understanding Go's zero value concept is essential. Unlike languages
+            where uninitialized variables contain garbage values, Go guarantees
+            predictable defaults. This makes Go code safer and reduces
+            initialization bugs.
+          </p>
+
+          <pre><code class="language-go">func demonstrateZeroValues() {
+    // Numeric types default to 0
+    var count int
+    var price float64
+    fmt.Printf("Count: %d, Price: %.2f\n", count, price)  // 0, 0.00
+
+    // Booleans default to false
+    var isReady bool
+    fmt.Printf("Ready: %v\n", isReady)  // false
+
+    // Strings default to empty string
+    var name string
+    fmt.Printf("Name: '%s' (length: %d)\n", name, len(name))  // '', 0
+
+    // Pointers, slices, maps, channels, functions default to nil
+    var ptr *int
+    var slice []int
+    var dict map[string]int
+    var ch chan int
+    var fn func()
+
+    fmt.Printf("Pointer is nil: %v\n", ptr == nil)      // true
+    fmt.Printf("Slice is nil: %v\n", slice == nil)      // true
+    fmt.Printf("Map is nil: %v\n", dict == nil)         // true
+    fmt.Printf("Channel is nil: %v\n", ch == nil)       // true
+    fmt.Printf("Function is nil: %v\n", fn == nil)      // true
+
+    // Safe to check nil before use
+    if slice == nil {
+        slice = make([]int, 10)  // Initialize before using
+        fmt.Println("Slice initialized with length:", len(slice))
+    }
+}</code></pre>
+
+          <p>
+            <strong>Critical Note:</strong> While nil slices, maps, and pointers
+            are safe to check, attempting to <em>use</em> them without
+            initialization causes runtime panics. Always check for nil or use
+            <code>make()</code> to initialize reference types before use.
+          </p>
+
+          <h2 class="subtitle">Scope and Visibility</h2>
+
+          <p>
+            Variable scope in Go follows lexical scoping rules. Understanding
+            scope helps prevent naming conflicts and makes code more
+            maintainable.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import "fmt"
+
+// Package-level (global) - capitalized names are exported
+var GlobalConfig string = "production"  // Exported (accessible from other packages)
+var internalState int = 0               // Not exported (package-only)
+
+func main() {
+    // Function-level variables
+    localVar := "I'm local to main"
+    fmt.Println(localVar)
+
+    // Block-level scope
+    if true {
+        blockVar := "I only exist in this if block"
+        fmt.Println(blockVar)
+        fmt.Println(localVar)  // Can access parent scope
+    }
+    // fmt.Println(blockVar)  // ERROR: blockVar not defined here
+
+    // Loop variables are scoped to the loop
+    for i := 0; i < 3; i++ {
+        loopVar := i * 2
+        fmt.Printf("Loop %d: %d\n", i, loopVar)
+    }
+    // fmt.Println(i)  // ERROR: i not defined here
+
+    // Shadowing - inner scope can redeclare outer variables
+    message := "Outer"
+    fmt.Println(message)  // "Outer"
+
+    {
+        message := "Inner"  // Different variable, shadows outer
+        fmt.Println(message)  // "Inner"
+    }
+
+    fmt.Println(message)  // "Outer" - outer variable unchanged
+}</code></pre>
+
+          <p>
+            <strong>Important Pattern:</strong> Variable shadowing (redeclaring
+            a variable in an inner scope) is legal in Go but can lead to
+            confusion. Modern linters can detect and warn about shadowing. Be
+            especially careful with error variables: <code>err</code> is
+            commonly shadowed in nested scopes.
+          </p>
+
+          <h2 class="subtitle">Practical Examples</h2>
+
+          <p>
+            Here are real-world patterns showing effective variable usage in Go
+            programs.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "time"
+)
+
+// Configuration struct with zero values
+type Config struct {
+    Host    string
+    Port    int
+    Timeout time.Duration
+    Debug   bool
+}
+
+func NewConfig() Config {
+    // Return config with explicit values, overriding zero values
+    return Config{
+        Host:    "localhost",
+        Port:    8080,
+        Timeout: 30 * time.Second,
+        Debug:   false,  // Explicit for documentation
+    }
+}
+
+func processUser(name string, age int) (string, error) {
+    // Validate inputs
+    if name == "" {
+        return "", fmt.Errorf("name cannot be empty")
+    }
+
+    if age < 0 || age > 150 {
+        return "", fmt.Errorf("invalid age: %d", age)
+    }
+
+    // Process with local variables
+    formattedName := fmt.Sprintf("%s (age %d)", name, age)
+    
+    return formattedName, nil
+}
+
+func main() {
+    // Use const for unchanging values
+    const maxRetries = 3
+    const apiEndpoint = "https://api.example.com"
+
+    // Use var for values that will change
+    var retryCount int = 0
+    var lastError error
+
+    // Use := for local variables with clear initialization
+    config := NewConfig()
+    startTime := time.Now()
+
+    fmt.Printf("Starting %s on %s:%d\n", 
+        "MyApp", config.Host, config.Port)
+
+    // Demonstrate variable usage in loop
+    for retryCount < maxRetries {
+        result, err := processUser("Alice", 30)
+        if err != nil {
+            lastError = err
+            retryCount++
+            fmt.Printf("Retry %d: %v\n", retryCount, err)
+            time.Sleep(time.Second)
+            continue
+        }
+
+        fmt.Println("Success:", result)
+        break
+    }
+
+    elapsed := time.Since(startTime)
+    fmt.Printf("Completed in %v\n", elapsed)
+
+    if lastError != nil {
+        fmt.Printf("Final error: %v\n", lastError)
+    }
+}</code></pre>
+
+          <p>
+            <strong>Key Takeaways:</strong> Use constants for configuration
+            values that never change. Leverage zero values when they represent
+            valid defaults. Use descriptive variable names that make code
+            self-documenting. Group related variables in structs for better
+            organization. Always handle errors returned from functions.
+          </p>
+        </div>
+      </section>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  </body>
+</html>

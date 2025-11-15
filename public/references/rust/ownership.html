@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Ownership</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">Rust Ownership</h1>
+
+            <p>
+                Ownership is Rust's most unique feature and has deep implications for the
+                rest of the language. It enables Rust to make memory safety guarantees
+                without needing a garbage collector.
+            </p>
+
+            <h2 class="subtitle">Ownership Rules</h2>
+            <p>Rust's ownership system follows three main rules:</p>
+            <ul>
+                <li>Each value in Rust has an owner</li>
+                <li>There can only be one owner at a time</li>
+                <li>When the owner goes out of scope, the value will be dropped</li>
+            </ul>
+
+            <h2 class="subtitle">Variable Scope</h2>
+            <p>A scope is the range within a program for which an item is valid:</p>
+            <pre><code class="language-rust">fn main() {
+    {                      // s is not valid here, not yet declared
+        let s = "hello";   // s is valid from this point forward
+        // do stuff with s
+    }                      // scope is over, s is no longer valid
+}</code></pre>
+
+            <h2 class="subtitle">Move Semantics</h2>
+            <p>Rust moves ownership by default for types on the heap:</p>
+            <pre><code class="language-rust">fn main() {
+    let s1 = String::from("hello");
+    let s2 = s1;  // s1 is moved to s2
+    
+    // println!("{}", s1); // Error: value borrowed after move
+    println!("{}", s2);  // This works
+}</code></pre>
+
+            <h2 class="subtitle">Clone</h2>
+            <p>To create a deep copy, use the clone method:</p>
+            <pre><code class="language-rust">fn main() {
+    let s1 = String::from("hello");
+    let s2 = s1.clone();  // Explicitly copy data
+    
+    println!("s1 = {}, s2 = {}", s1, s2);  // Both work
+}</code></pre>
+
+            <h2 class="subtitle">Copy Types</h2>
+            <p>Types stored entirely on the stack use Copy semantics:</p>
+            <pre><code class="language-rust">fn main() {
+    let x = 5;
+    let y = x;  // x is copied, not moved
+    
+    println!("x = {}, y = {}", x, y);  // Both work
+}
+
+// Types that implement Copy:
+// - All integer types
+// - Boolean type
+// - All floating-point types
+// - Character type
+// - Tuples (if they only contain Copy types)</code></pre>
+
+            <h2 class="subtitle">Ownership and Functions</h2>
+            <p>Passing a value to a function transfers ownership:</p>
+            <pre><code class="language-rust">fn main() {
+    let s = String::from("hello");
+    takes_ownership(s);  // s is moved into the function
+    // s is no longer valid here
+    
+    let x = 5;
+    makes_copy(x);  // x is copied
+    // x is still valid here
+}
+
+fn takes_ownership(some_string: String) {
+    println!("{}", some_string);
+} // some_string goes out of scope and is dropped
+
+fn makes_copy(some_integer: i32) {
+    println!("{}", some_integer);
+} // some_integer goes out of scope, nothing special happens</code></pre>
+
+            <h2 class="subtitle">Return Values and Scope</h2>
+            <p>Returning values transfers ownership:</p>
+            <pre><code class="language-rust">fn main() {
+    let s1 = gives_ownership();
+    let s2 = String::from("hello");
+    let s3 = takes_and_gives_back(s2);
+}
+
+fn gives_ownership() -> String {
+    let some_string = String::from("yours");
+    some_string  // Returned and moves out
+}
+
+fn takes_and_gives_back(a_string: String) -> String {
+    a_string  // Returned and moves out
+}</code></pre>
+        </div>
+        <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+          <a href="/references/rust/borrowing.html" class="pagination-previous">Previous: Borrowing</a>
+          <a href="/references/rust/structs.html" class="pagination-next">Next: Structs</a>
+        </nav>
+    </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

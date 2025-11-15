@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Modules and Packages</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">Python Modules & Packages</h1>
+            <p class="subtitle">A guide to organizing, importing, and distributing code with Python's module and package system.</p>
+            <p>Modules and packages are the cornerstone of code organization and reusability in Python. A <strong>module</strong> is a single file of Python code, while a <strong>package</strong> is a directory of modules that are grouped together.</p>
+
+            <h2 class="title is-3">1. Module Basics</h2>
+            <p>A module is simply a file containing Python definitions and statements. The file name is the module name with the <code>.py</code> suffix. This allows you to logically organize your code and reuse it across different programs.</p>
+
+            <h3 class="title is-4">Creating and Using a Module</h3>
+            <p>To create a module, you save your code in a file with a <code>.py</code> extension.</p>
+            
+            <p><strong>File: `my_module.py`</strong></p>
+            <pre><code class="language-python">"""A simple demonstration module."""
+
+PI = 3.14159
+
+def greet(name: str) -> None:
+    """Prints a greeting message."""
+    print(f"Hello, {name}!")
+
+def calculate_area(radius: float) -> float:
+    """Calculates the area of a circle."""
+    return PI * radius ** 2
+</code></pre>
+
+            <p>To use this module in another file (e.g., `main.py`), you use the <code>import</code> statement.</p>
+            <p><strong>File: `main.py`</strong></p>
+            <pre><code class="language-python"># Import the entire module
+import my_module
+
+my_module.greet("Alice")  # Output: Hello, Alice!
+
+area = my_module.calculate_area(5)
+print(f"The area is: {area}") # Output: The area is: 78.53975
+
+print(f"The value of PI is: {my_module.PI}") # Output: The value of PI is: 3.14159
+</code></pre>
+
+            <h3 class="title is-4">Import Variations</h3>
+            <p>Python provides several ways to import code, each with its own use case.</p>
+            <pre><code class="language-python"># 1. Import the entire module (preferred for clarity)
+import math
+print(math.sqrt(16)) # 4.0
+
+# 2. Import specific items from a module
+from math import sqrt, pi
+print(sqrt(16)) # 4.0
+print(pi)       # 3.14159...
+
+# 3. Import with an alias to shorten the name
+import numpy as np
+arr = np.array([1, 2, 3])
+
+# 4. Import everything (NOT RECOMMENDED)
+# This pollutes the global namespace and makes it hard to know where functions come from.
+from math import *
+print(cos(pi)) # -1.0
+</code></pre>
+
+            <h2 class="title is-3">2. The `if __name__ == "__main__"` Guard</h2>
+            <p>This is a common and important idiom in Python. The code inside this block will only run when the module is executed as a standalone script, not when it is imported into another module. This allows a module to provide both reusable functions and a command-line interface.</p>
+            <pre><code class="language-python"># File: my_script.py
+
+def helper_function():
+    print("This is a helper function.")
+
+def main():
+    print("This is the main function of the script.")
+    helper_function()
+
+# This code runs only when you execute `python my_script.py`
+if __name__ == "__main__":
+    main()
+</code></pre>
+
+            <h2 class="title is-3">3. Packages</h2>
+            <p>Packages are a way of structuring Python's module namespace by using "dotted module names". A package is a directory of Python modules that contains a special <code>__init__.py</code> file. This file can be empty, or it can contain initialization code for the package.</p>
+            
+            <h3 class="title is-4">Example Package Structure</h3>
+            <pre><code>
+my_app/
+├── __init__.py
+├── core/
+│   ├── __init__.py
+│   └── logic.py
+└── utils/
+    ├── __init__.py
+    └── helpers.py
+            </code></pre>
+
+            <p>With this structure, you can import modules using dot notation:</p>
+            <pre><code class="language-python">from my_app.core import logic
+from my_app.utils.helpers import format_data
+
+result = logic.process_data()
+formatted = format_data(result)
+</code></pre>
+
+            <h3 class="title is-4">The `__init__.py` File</h3>
+            <p>The <code>__init__.py</code> file serves two main purposes:</p>
+            <ol>
+                <li>It tells Python that the directory should be treated as a package.</li>
+                <li>It can be used to expose a public API for the package or run initialization code.</li>
+            </ol>
+            <pre><code class="language-python"># In my_app/core/__init__.py
+
+# This makes the process_data function available directly from the core package
+from .logic import process_data
+
+print("Core package initialized.")
+</code></pre>
+            <pre><code class="language-python"># Now you can import directly from 'core'
+from my_app.core import process_data
+
+result = process_data()
+</code></pre>
+
+            <h2 class="title is-3">4. Dynamic Imports</h2>
+            <p>The <code>importlib</code> module allows you to import modules dynamically using their string names. This is useful for building plugin systems or when the module to be imported is not known until runtime.</p>
+            <pre><code class="language-python">import importlib
+
+module_name = "math"
+math_module = importlib.import_module(module_name)
+
+print(math_module.sqrt(25)) # 5.0
+</code></pre>
+
+            <h2 class="title is-3">5. Best Practices</h2>
+            <div class="notification is-info">
+                <ul>
+                    <li><strong>Use explicit imports:</strong> Write <code>import my_module</code> and use <code>my_module.my_function()</code>. This makes code readable and avoids namespace conflicts.</li>
+                    <li><strong>Avoid <code>from module import *</code>:</strong> It pollutes your namespace and makes it difficult to trace the origin of functions and variables.</li>
+                    <li><strong>Group and order imports:</strong> Follow the standard convention:
+                        <ol>
+                            <li>Standard library imports (e.g., <code>os</code>, <code>sys</code>)</li>
+                            <li>Third-party library imports (e.g., <code>numpy</code>, <code>requests</code>)</li>
+                            <li>Local application/library imports</li>
+                        </ol>
+                    </li>
+                    <li><strong>Use absolute imports by default:</strong> <code>from my_app.core import logic</code> is clearer than relative imports, especially in complex projects.</li>
+                    <li><strong>Use the <code>if __name__ == "__main__"</code> guard</strong> to separate reusable logic from script-specific execution code.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Types</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">TypeScript Types</h1>
+
+            <p>
+                TypeScript extends JavaScript by adding types to the language. Types provide
+                a way to describe the shape of an object, providing better documentation and
+                allowing TypeScript to validate that your code is working correctly.
+            </p>
+
+            <h2 class="subtitle">Basic Types</h2>
+            <p>
+                TypeScript supports several basic types including primitives and complex
+                types:
+            </p>
+            <pre><code class="language-typescript">// Primitives
+let isDone: boolean = false;
+let decimal: number = 6;
+let color: string = "blue";
+
+// Arrays
+let list: number[] = [1, 2, 3];
+let items: Array&lt;number&gt; = [1, 2, 3];
+
+// Tuple
+let tuple: [string, number] = ["hello", 10];
+
+// Enum
+enum Color { Red, Green, Blue }
+let c: Color = Color.Green;
+
+// Any - opts out of type checking
+let notSure: any = 4;
+notSure = "maybe a string";
+
+// Void - absence of any type
+function warn(): void {
+  console.log("Warning!");
+}
+
+// Null and Undefined
+let u: undefined = undefined;
+let n: null = null;
+
+// Never - represents values that never occur
+function error(message: string): never {
+  throw new Error(message);
+}</code></pre>
+
+            <h2 class="subtitle">Type Annotations</h2>
+            <p>
+                You can add type annotations to variables, function parameters, and return
+                types:
+            </p>
+            <pre><code class="language-typescript">function greeter(person: string): string {
+  return "Hello, " + person;
+}
+
+let user = "Jane";
+console.log(greeter(user));</code></pre>
+
+            <h2 class="subtitle">Type Inference</h2>
+            <p>TypeScript can automatically infer types based on the assigned value:</p>
+            <pre><code class="language-typescript">// Type is inferred as string
+let message = "Hello World";
+
+// Type is inferred as number
+let count = 42;
+
+// Type is inferred from return value
+function add(a: number, b: number) {
+  return a + b; // returns number
+}</code></pre>
+
+            <h2 class="subtitle">Union Types</h2>
+            <p>A union type describes a value that can be one of several types:</p>
+            <pre><code class="language-typescript">function printId(id: number | string) {
+  console.log("Your ID is: " + id);
+}
+
+printId(101);
+printId("202");
+
+// Type narrowing
+function welcomePeople(x: string[] | string) {
+  if (Array.isArray(x)) {
+    console.log("Hello, " + x.join(" and "));
+  } else {
+    console.log("Welcome lone traveler " + x);
+  }
+}</code></pre>
+
+            <h2 class="subtitle">Type Aliases</h2>
+            <p>Create custom type names for any type:</p>
+            <pre><code class="language-typescript">type Point = {
+  x: number;
+  y: number;
+};
+
+type ID = number | string;
+
+function printCoord(pt: Point) {
+  console.log("x: " + pt.x + ", y: " + pt.y);
+}
+
+let myId: ID = "abc123";</code></pre>
+        </div>
+        <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+          <a href="/references/typescript/interfaces.html" class="pagination-previous">Previous: Interfaces</a>
+        </nav>
+    </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

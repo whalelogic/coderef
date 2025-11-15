@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Go Interfaces</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <section class="section">
+        <div class="content">
+          <h1 class="title">Interfaces in Go</h1>
+
+          <p>
+            Interfaces are one of Go's most powerful features, enabling polymorphism,
+            abstraction, and loose coupling. Unlike many languages, Go interfaces are
+            implicit—a type doesn't declare that it implements an interface. If a type
+            has all the methods an interface requires, it automatically satisfies that
+            interface.
+          </p>
+
+          <h2 class="subtitle">Interface Basics</h2>
+
+          <p>
+            An interface type specifies a set of method signatures. Any type that
+            implements all those methods satisfies the interface—no explicit declaration
+            needed. This design philosophy, called "structural typing," makes code more
+            flexible and decoupled.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "math"
+)
+
+// Define interface
+type Shape interface {
+    Area() float64
+    Perimeter() float64
+}
+
+// Rectangle implements Shape
+type Rectangle struct {
+    Width, Height float64
+}
+
+func (r Rectangle) Area() float64 {
+    return r.Width * r.Height
+}
+
+func (r Rectangle) Perimeter() float64 {
+    return 2 * (r.Width + r.Height)
+}
+
+// Circle implements Shape
+type Circle struct {
+    Radius float64
+}
+
+func (c Circle) Area() float64 {
+    return math.Pi * c.Radius * c.Radius
+}
+
+func (c Circle) Perimeter() float64 {
+    return 2 * math.Pi * c.Radius
+}
+
+// Function that works with any Shape
+func PrintShapeInfo(s Shape) {
+    fmt.Printf("Area: %.2f, Perimeter: %.2f\n", 
+        s.Area(), s.Perimeter())
+}
+
+func main() {
+    rect := Rectangle{Width: 10, Height: 5}
+    circ := Circle{Radius: 7}
+    
+    // Both Rectangle and Circle satisfy Shape interface
+    PrintShapeInfo(rect)
+    PrintShapeInfo(circ)
+    
+    // Store different types in slice of interface
+    shapes := []Shape{rect, circ}
+    for i, shape := range shapes {
+        fmt.Printf("Shape %d: ", i+1)
+        PrintShapeInfo(shape)
+    }
+}</code></pre>
+
+          <p>
+            <strong>Key Insight:</strong> The power of interfaces lies in decoupling.
+            Code depends on behavior (methods) rather than specific types. This makes
+            code more testable, maintainable, and extensible.
+          </p>
+
+          <h2 class="subtitle">The Empty Interface</h2>
+
+          <p>
+            The empty interface <code>interface{}</code> (or <code>any</code> in Go
+            1.18+) has zero methods, so every type satisfies it. It's useful for
+            handling values of unknown type, similar to <code>Object</code> in Java or
+            <code>void*</code> in C.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import "fmt"
+
+// Function that accepts any type
+func describe(i interface{}) {
+    fmt.Printf("Value: %v, Type: %T\n", i, i)
+}
+
+// Store different types
+func storeAnything() {
+    var data interface{}
+    
+    data = 42
+    describe(data)
+    
+    data = "hello"
+    describe(data)
+    
+    data = []int{1, 2, 3}
+    describe(data)
+    
+    data = struct{ X, Y int }{10, 20}
+    describe(data)
+}
+
+// Modern syntax (Go 1.18+)
+func describeModern(i any) {
+    fmt.Printf("Value: %v, Type: %T\n", i, i)
+}
+
+// Common use case: variadic function
+func printAll(items ...interface{}) {
+    for i, item := range items {
+        fmt.Printf("Item %d: %v (%T)\n", i, item, item)
+    }
+}
+
+func main() {
+    storeAnything()
+    
+    fmt.Println("\nUsing any:")
+    describeModern(3.14)
+    
+    fmt.Println("\nVariadic with mixed types:")
+    printAll(42, "text", true, 3.14, []int{1, 2})
+}</code></pre>
+
+          <p>
+            <strong>Warning:</strong> Empty interfaces sacrifice type safety. Use them
+            sparingly. Prefer concrete types or specific interfaces when possible. With
+            Go 1.18+, generics are often a better choice than <code>interface{}</code>.
+          </p>
+
+          <h2 class="subtitle">Type Assertions and Type Switches</h2>
+
+          <p>
+            Type assertions extract the concrete value from an interface. Type switches
+            let you handle different types elegantly. These are essential tools for
+            working with interfaces safely.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import "fmt"
+
+func main() {
+    var i interface{} = "hello"
+    
+    // Type assertion - extract concrete value
+    s := i.(string)
+    fmt.Println("String value:", s)
+    
+    // Safe type assertion with ok idiom
+    s, ok := i.(string)
+    if ok {
+        fmt.Println("It's a string:", s)
+    }
+    
+    // This would panic:
+    // f := i.(float64)
+    
+    // Safe version - doesn't panic
+    f, ok := i.(float64)
+    if ok {
+        fmt.Println("It's a float:", f)
+    } else {
+        fmt.Println("Not a float")
+    }
+    
+    // Type switch - elegant way to handle multiple types
+    checkType(42)
+    checkType("hello")
+    checkType(3.14)
+    checkType(true)
+    checkType([]int{1, 2, 3})
+}
+
+func checkType(i interface{}) {
+    switch v := i.(type) {
+    case int:
+        fmt.Printf("Integer: %d (double: %d)\n", v, v*2)
+    case string:
+        fmt.Printf("String: %q (length: %d)\n", v, len(v))
+    case float64:
+        fmt.Printf("Float: %.2f (squared: %.2f)\n", v, v*v)
+    case bool:
+        fmt.Printf("Boolean: %v (negated: %v)\n", v, !v)
+    default:
+        fmt.Printf("Unknown type: %T\n", v)
+    }
+}</code></pre>
+
+          <p>
+            <strong>Best Practice:</strong> Always use the "comma ok" idiom for type
+            assertions to avoid panics. Use type switches when you need to handle
+            multiple types—it's more readable than chained if statements.
+          </p>
+
+          <h2 class="subtitle">Common Standard Library Interfaces</h2>
+
+          <p>
+            Go's standard library defines many small, focused interfaces. Learning these
+            interfaces helps you write idiomatic Go code that integrates smoothly with
+            the ecosystem.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "io"
+    "strings"
+)
+
+// Stringer interface from fmt package
+type Person struct {
+    Name string
+    Age  int
+}
+
+func (p Person) String() string {
+    return fmt.Sprintf("%s (age %d)", p.Name, p.Age)
+}
+
+// Reader interface - read data
+type StringReader struct {
+    data   string
+    offset int
+}
+
+func (sr *StringReader) Read(p []byte) (n int, err error) {
+    if sr.offset >= len(sr.data) {
+        return 0, io.EOF
+    }
+    n = copy(p, sr.data[sr.offset:])
+    sr.offset += n
+    return n, nil
+}
+
+// Writer interface - write data
+type CountWriter struct {
+    count int
+}
+
+func (cw *CountWriter) Write(p []byte) (n int, err error) {
+    cw.count += len(p)
+    return len(p), nil
+}
+
+func (cw *CountWriter) BytesWritten() int {
+    return cw.count
+}
+
+func main() {
+    // Stringer interface
+    person := Person{Name: "Alice", Age: 30}
+    fmt.Println(person)  // Calls String() method
+    
+    // Reader interface
+    reader := &StringReader{data: "Hello, World!"}
+    buffer := make([]byte, 5)
+    
+    for {
+        n, err := reader.Read(buffer)
+        if err == io.EOF {
+            break
+        }
+        fmt.Printf("Read %d bytes: %s\n", n, string(buffer[:n]))
+    }
+    
+    // Writer interface
+    writer := &CountWriter{}
+    io.WriteString(writer, "Hello, ")
+    io.WriteString(writer, "World!")
+    fmt.Printf("Total bytes written: %d\n", writer.BytesWritten())
+    
+    // Multiple interfaces
+    var r io.Reader = strings.NewReader("test data")
+    data, _ := io.ReadAll(r)
+    fmt.Printf("Read: %s\n", data)
+}</code></pre>
+
+          <p>
+            <strong>Key Standard Interfaces:</strong>
+            <code>io.Reader/Writer</code> (I/O), <code>fmt.Stringer</code> (formatting),
+            <code>error</code> (errors), <code>sort.Interface</code> (sorting),
+            <code>http.Handler</code> (HTTP). Master these for idiomatic Go.
+          </p>
+
+          <h2 class="subtitle">Interface Composition</h2>
+
+          <p>
+            Interfaces can embed other interfaces, creating larger interfaces from
+            smaller ones. This follows Go's philosophy of composing simple pieces into
+            more complex ones.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "io"
+)
+
+// Small, focused interfaces
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+
+type Closer interface {
+    Close() error
+}
+
+// Composed interfaces
+type ReadWriter interface {
+    Reader
+    Writer
+}
+
+type ReadCloser interface {
+    Reader
+    Closer
+}
+
+type WriteCloser interface {
+    Writer
+    Closer
+}
+
+type ReadWriteCloser interface {
+    Reader
+    Writer
+    Closer
+}
+
+// Implementation
+type Buffer struct {
+    data []byte
+}
+
+func (b *Buffer) Read(p []byte) (n int, err error) {
+    if len(b.data) == 0 {
+        return 0, io.EOF
+    }
+    n = copy(p, b.data)
+    b.data = b.data[n:]
+    return n, nil
+}
+
+func (b *Buffer) Write(p []byte) (n int, err error) {
+    b.data = append(b.data, p...)
+    return len(p), nil
+}
+
+func (b *Buffer) Close() error {
+    b.data = nil
+    return nil
+}
+
+// Function using composed interface
+func copyAndClose(dst WriteCloser, src ReadCloser) error {
+    defer src.Close()
+    defer dst.Close()
+    
+    _, err := io.Copy(dst, src)
+    return err
+}
+
+func main() {
+    buf := &Buffer{}
+    
+    // buf satisfies multiple interfaces
+    var rw ReadWriter = buf
+    var rwc ReadWriteCloser = buf
+    
+    rw.Write([]byte("Hello"))
+    rwc.Write([]byte(", World!"))
+    
+    data := make([]byte, 20)
+    n, _ := buf.Read(data)
+    fmt.Printf("Read: %s\n", data[:n])
+}</code></pre>
+
+          <p>
+            <strong>Design Principle:</strong> Prefer many small interfaces over few
+            large ones. Clients should only depend on the methods they actually use.
+            Compose interfaces to create richer contracts when needed.
+          </p>
+
+          <h2 class="subtitle">Interface Values and nil</h2>
+
+          <p>
+            Understanding how interface values work internally is crucial for avoiding
+            nil pointer bugs. An interface value holds both a type and a value—both must
+            be considered when checking for nil.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import "fmt"
+
+type Printer interface {
+    Print()
+}
+
+type ConsolePrinter struct {
+    name string
+}
+
+func (c *ConsolePrinter) Print() {
+    if c == nil {
+        fmt.Println("nil printer")
+        return
+    }
+    fmt.Println("Printing from:", c.name)
+}
+
+func main() {
+    // Case 1: nil interface (both type and value are nil)
+    var p1 Printer
+    fmt.Printf("p1 == nil: %v\n", p1 == nil)  // true
+    
+    // Case 2: non-nil interface with nil value
+    var cp *ConsolePrinter  // nil pointer
+    var p2 Printer = cp     // interface is NOT nil!
+    fmt.Printf("p2 == nil: %v\n", p2 == nil)  // false (type is set)
+    
+    // This is safe - method can check for nil receiver
+    p2.Print()  // Prints "nil printer"
+    
+    // Case 3: non-nil interface with non-nil value
+    p3 := &ConsolePrinter{name: "Logger"}
+    fmt.Printf("p3 == nil: %v\n", p3 == nil)  // false
+    p3.Print()
+    
+    // Demonstrating the problem
+    demonstrateNilInterface()
+}
+
+func demonstrateNilInterface() {
+    var cp *ConsolePrinter  // nil pointer
+    
+    if cp == nil {
+        fmt.Println("Pointer is nil")
+    }
+    
+    var p Printer = cp  // Assign nil pointer to interface
+    
+    // BUG: This check fails! Interface is not nil
+    if p == nil {
+        fmt.Println("Interface is nil")
+    } else {
+        fmt.Println("Interface is NOT nil (but holds nil value)")
+    }
+    
+    // Correct way to check
+    if p == nil || p.(*ConsolePrinter) == nil {
+        fmt.Println("Actually nil")
+    }
+}
+</code></pre>
+
+          <p>
+            <strong>Critical Bug Prevention:</strong> An interface is only nil if both
+            its type and value are nil. A common bug is returning a nil concrete type as
+            an interface—it's not nil! Always return typed nil or check both conditions.
+          </p>
+
+          <h2 class="subtitle">Practical Interface Patterns</h2>
+
+          <p>
+            Interfaces enable powerful design patterns in Go. Here are some common,
+            production-ready patterns you'll use frequently.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "time"
+)
+
+// Strategy Pattern - different algorithms with same interface
+type PaymentProcessor interface {
+    ProcessPayment(amount float64) error
+}
+
+type CreditCard struct{}
+
+func (c CreditCard) ProcessPayment(amount float64) error {
+    fmt.Printf("Processing $%.2f via credit card\n", amount)
+    return nil
+}
+
+type PayPal struct{}
+
+func (p PayPal) ProcessPayment(amount float64) error {
+    fmt.Printf("Processing $%.2f via PayPal\n", amount)
+    return nil
+}
+
+type Bitcoin struct{}
+
+func (b Bitcoin) ProcessPayment(amount float64) error {
+    fmt.Printf("Processing $%.2f via Bitcoin\n", amount)
+    return nil
+}
+
+func checkout(processor PaymentProcessor, amount float64) {
+    processor.ProcessPayment(amount)
+}
+
+// Decorator Pattern - add behavior to existing types
+type Logger interface {
+    Log(message string)
+}
+
+type SimpleLogger struct{}
+
+func (s SimpleLogger) Log(message string) {
+    fmt.Println(message)
+}
+
+type TimestampLogger struct {
+    logger Logger
+}
+
+func (t TimestampLogger) Log(message string) {
+    timestamp := time.Now().Format("2006-01-02 15:04:05")
+    t.logger.Log(fmt.Sprintf("[%s] %s", timestamp, message))
+}
+
+type PrefixLogger struct {
+    logger Logger
+    prefix string
+}
+
+func (p PrefixLogger) Log(message string) {
+    p.logger.Log(fmt.Sprintf("[%s] %s", p.prefix, message))
+}
+
+// Adapter Pattern - make incompatible interfaces work together
+type LegacyPrinter struct{}
+
+func (l LegacyPrinter) PrintLine(text string) {
+    fmt.Println("LEGACY:", text)
+}
+
+type ModernPrinter interface {
+    Print(text string)
+}
+
+type PrinterAdapter struct {
+    legacy LegacyPrinter
+}
+
+func (a PrinterAdapter) Print(text string) {
+    a.legacy.PrintLine(text)
+}
+
+func useModernPrinter(p ModernPrinter) {
+    p.Print("Hello from modern system")
+}
+
+func main() {
+    // Strategy pattern
+    checkout(CreditCard{}, 100.00)
+    checkout(PayPal{}, 50.00)
+    checkout(Bitcoin{}, 25.00)
+    
+    fmt.Println()
+    
+    // Decorator pattern
+    simple := SimpleLogger{}
+    simple.Log("Simple message")
+    
+    timestamped := TimestampLogger{logger: simple}
+    timestamped.Log("Message with timestamp")
+    
+    prefixed := PrefixLogger{
+        logger: timestamped,
+        prefix: "INFO",
+    }
+    prefixed.Log("Decorated message")
+    
+    fmt.Println()
+    
+    // Adapter pattern
+    legacy := LegacyPrinter{}
+    adapter := PrinterAdapter{legacy: legacy}
+    useModernPrinter(adapter)
+}</code></pre>
+
+          <p>
+            <strong>Pattern Guidelines:</strong> Use Strategy for interchangeable
+            algorithms, Decorator to add behavior without modifying types, Adapter to
+            make incompatible interfaces work together. Interfaces make these patterns
+            natural in Go.
+          </p>
+
+          <h2 class="subtitle">Best Practices</h2>
+
+          <ul>
+            <li>
+              <strong>Accept interfaces, return structs:</strong> Function parameters
+              should be interfaces for flexibility; return concrete types for clarity.
+            </li>
+            <li>
+              <strong>Keep interfaces small:</strong> One or two methods is ideal. Many
+              small interfaces are better than few large ones.
+            </li>
+            <li>
+              <strong>Define interfaces where used:</strong> Put interfaces in the
+              consumer package, not the provider package.
+            </li>
+            <li>
+              <strong>Avoid interface pollution:</strong> Don't define interfaces "just
+              in case." Create them when you need abstraction.
+            </li>
+            <li>
+              <strong>Use standard library interfaces:</strong> Implement
+              <code>io.Reader</code>, <code>fmt.Stringer</code>, etc. for ecosystem
+              integration.
+            </li>
+            <li>
+              <strong>Check nil carefully:</strong> Remember that interfaces can be
+              non-nil while holding nil values.
+            </li>
+            <li>
+              <strong>Document interface contracts:</strong> Clearly specify expected
+              behavior and any guarantees.
+            </li>
+          </ul>
+        </div>
+      </section>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  </body>
+</html>

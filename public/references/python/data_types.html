@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Data Types</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">Python Built-in Data Types</h1>
+            <p class="subtitle">A guide to Python's fundamental data types for storing and manipulating data.</p>
+            <p>Python has a rich set of built-in data types that are the building blocks of any program. Understanding their characteristics and when to use them is essential for writing effective Python code.</p>
+
+            <h2 class="title is-3">1. Numeric Types</h2>
+            <p>Numeric types represent numbers. Python supports integers, floating-point numbers, and complex numbers.</p>
+            <pre><code class="language-python"># Integer (int) - whole numbers
+my_integer = 42
+print(f"Integer: {my_integer}, Type: {type(my_integer)}")
+
+# Float (float) - numbers with a decimal point
+my_float = 3.14159
+print(f"Float: {my_float}, Type: {type(my_float)}")
+
+# Complex (complex) - numbers with a real and imaginary part
+my_complex = 3 + 4j
+print(f"Complex: {my_complex}, Type: {type(my_complex)}")
+
+# Basic arithmetic
+a = 10
+b = 3
+print(f"a + b = {a + b}") # Addition
+print(f"a / b = {a / b}") # Division (always returns a float)
+print(f"a // b = {a // b}") # Integer division
+print(f"a % b = {a % b}") # Modulus (remainder)
+print(f"a ** b = {a ** b}") # Exponentiation
+</code></pre>
+
+            <h2 class="title is-3">2. Sequence Types</h2>
+            <p>Sequence types represent ordered collections of items. The most common are strings, lists, and tuples.</p>
+
+            <h3 class="title is-4">Strings (str)</h3>
+            <p>Strings are immutable sequences of Unicode characters, used for storing text data.</p>
+            <pre><code class="language-python">my_string = "Hello, World!"
+
+# Indexing and slicing
+print(f"First character: {my_string[0]}")      # 'H'
+print(f"Last character: {my_string[-1]}")     # '!'
+print(f"Slice: {my_string[7:12]}") # 'World'
+
+# Common methods
+print(my_string.upper()) # "HELLO, WORLD!"
+print(my_string.lower()) # "hello, world!"
+print(my_string.startswith("Hello")) # True
+print(my_string.split(',')) # ['Hello', ' World!']
+</code></pre>
+
+            <h3 class="title is-4">Lists (list)</h3>
+            <p>Lists are mutable, ordered sequences of items. They are one of the most versatile data types in Python.</p>
+            <pre><code class="language-python">my_list = [1, "apple", 3.14, True]
+
+# Modifying a list
+my_list.append("new item")    # Add to the end
+my_list[1] = "orange"         # Change an element
+print(f"Modified list: {my_list}")
+
+# Common methods
+my_list.pop() # Removes and returns the last item
+my_list.insert(0, "first") # Insert at a specific index
+my_list.sort() # Sorts the list in-place (if elements are comparable)
+</code></pre>
+
+            <h3 class="title is-4">Tuples (tuple)</h3>
+            <p>Tuples are immutable, ordered sequences of items. Once a tuple is created, it cannot be changed.</p>
+            <pre><code class="language-python">my_tuple = (1, "apple", 3.14, True)
+
+# Tuples are immutable
+# my_tuple[1] = "orange" # This would raise a TypeError
+
+# They are useful for fixed collections of items
+# For example, returning multiple values from a function
+def get_coordinates():
+    return (10, 20)
+
+x, y = get_coordinates()
+print(f"x: {x}, y: {y}")
+</code></pre>
+            <div class="notification is-info">
+                <strong>Key Insight:</strong> Use a <strong>list</strong> when you need a collection of items that might change (add, remove, or reorder). Use a <strong>tuple</strong> when you have a collection of items that should not change, such as coordinates or fixed records.
+            </div>
+
+            <h2 class="title is-3">3. Mapping Type: Dictionary (dict)</h2>
+            <p>A dictionary is a mutable, unordered collection of key-value pairs. Each key must be unique and immutable (e.g., a string, number, or tuple).</p>
+            <pre><code class="language-python"># Creating a dictionary
+person = {
+    "name": "Alice",
+    "age": 30,
+    "city": "New York"
+}
+
+# Accessing values
+print(f"Name: {person['name']}") # "Alice"
+print(f"Age: {person.get('age')}") # 30 (get() is safer, returns None if key not found)
+
+# Modifying a dictionary
+person["age"] = 31
+person["email"] = "alice@example.com" # Add a new key-value pair
+del person["city"]
+
+print(f"Updated person: {person}")
+
+# Iterating over a dictionary
+for key, value in person.items():
+    print(f"{key}: {value}")
+</code></pre>
+
+            <h2 class="title is-3">4. Set Types</h2>
+            <p>Sets are mutable, unordered collections of unique, immutable items. They are useful for membership testing and mathematical set operations.</p>
+            <pre><code class="language-python">my_set = {1, 2, 3, 3, 4, 4, 4}
+print(f"Set (duplicates removed): {my_set}") # {1, 2, 3, 4}
+
+# Adding and removing items
+my_set.add(5)
+my_set.remove(2)
+print(f"Modified set: {my_set}")
+
+# Set operations
+set_a = {1, 2, 3, 4}
+set_b = {3, 4, 5, 6}
+
+print(f"Union: {set_a | set_b}")          # {1, 2, 3, 4, 5, 6}
+print(f"Intersection: {set_a & set_b}")    # {3, 4}
+print(f"Difference: {set_a - set_b}")      # {1, 2}
+print(f"Symmetric Difference: {set_a ^ set_b}") # {1, 2, 5, 6}
+</code></pre>
+
+            <h2 class="title is-3">5. Boolean Type (bool)</h2>
+            <p>The boolean type represents one of two values: <code>True</code> or <code>False</code>. It is often the result of comparisons.</p>
+            <pre><code class="language-python">is_active = True
+has_permission = False
+
+print(f"5 > 3 is {5 > 3}") # True
+print(f"10 == 20 is {10 == 20}") # False
+
+# Booleans are used for control flow
+if is_active and has_permission:
+    print("Access granted")
+else:
+    print("Access denied")
+</code></pre>
+
+            <h2 class="title is-3">6. The `None` Type</h2>
+            <p>The <code>NoneType</code> has a single value, <code>None</code>, which is used to represent the absence of a value or a null value.</p>
+            <pre><code class="language-python">my_variable = None
+
+if my_variable is None:
+    print("The variable has no value.")
+
+# Functions that don't explicitly return a value implicitly return None
+def no_return():
+    print("I don't return anything.")
+
+result = no_return()
+print(f"Result is: {result}") # Result is: None
+</code></pre>
+        </div>
+    </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

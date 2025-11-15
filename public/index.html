@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CodeRef - Programming Language Reference</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Roboto:wght@400;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="static/css/style.css" />
+  </head>
+  <body>
+    <nav
+      class="navbar is-fixed-top"
+      role="navigation"
+      aria-label="main navigation"
+    >
+      <div class="navbar-brand">
+        <a class="navbar-item" href="/">
+          <img
+            src="https://img.icons8.com/?size=100&id=KfbvFR264tVh&format=png&color=000000"
+            style="height: 60px; width: auto"
+          />
+          <span class="title is-4 ml-2">CodeRef</span>
+        </a>
+
+        <a
+          role="button"
+          class="navbar-burger"
+          aria-label="menu"
+          aria-expanded="false"
+          data-target="navbarBasicExample"
+        >
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
+      </div>
+
+      <div id="navbarBasicExample" class="navbar-menu">
+        <div class="navbar-start">
+          <a class="navbar-item" href="/">Home</a>
+          <a class="navbar-item" href="about.html">About</a>
+          <a class="navbar-item" href="contact.html">Contact</a>
+        </div>
+
+        <div class="navbar-end">
+          <div class="navbar-item">
+            <div class="field has-addons">
+              <div class="control">
+                <input
+                  class="input"
+                  type="text"
+                  id="search-input"
+                  placeholder="Search topics..."
+                />
+              </div>
+              <div class="control">
+                <a class="button is-info">
+                  <i class="fas fa-search"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <section class="hero is-small hero-gradient">
+      <div class="hero-body">
+        <div class="container">
+          <div class="columns is-vcentered">
+            <div class="column is-7">
+              <h1 class="title is-2 has-text-white hero-title">
+                CodeRef Programming Guides
+              </h1>
+              <p class="subtitle is-5 has-text-white hero-subtitle mt-4">
+                Quick access to Go, Python, JavaScript, TypeScript, Rust, and
+                Ruby code examples
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="columns">
+          <div class="column is-one-quarter">
+            <aside class="menu">
+              <p class="menu-label">Languages</p>
+              <ul class="menu-list" id="language-menu">
+                <li>
+                  <a href="#" data-lang="go"
+                    ><i class="devicon-go-original-wordmark"></i> Go</a
+                  >
+                </li>
+                <li>
+                  <a href="#" data-lang="python"
+                    ><i class="devicon-python-plain"></i> Python</a
+                  >
+                </li>
+                <li>
+                  <a href="#" data-lang="javascript"
+                    ><i class="devicon-javascript-plain"></i> JavaScript</a
+                  >
+                </li>
+                <li>
+                  <a href="#" data-lang="typescript"
+                    ><i class="devicon-typescript-plain"></i> TypeScript</a
+                  >
+                </li>
+                <li>
+                  <a href="#" data-lang="rust"
+                    ><i class="devicon-rust-original"></i> Rust</a
+                  >
+                </li>
+                <li>
+                  <a href="#" data-lang="ruby"
+                    ><i class="devicon-ruby-plain"></i> Ruby</a
+                  >
+                </li>
+              </ul>
+            </aside>
+          </div>
+          <div class="column">
+            <nav
+              class="breadcrumb"
+              aria-label="breadcrumbs"
+              id="breadcrumb-nav"
+            ></nav>
+            <div id="reference-content">
+              <div class="content">
+                <h2 class="title" id="language-title">Get Started</h2>
+                <p class="subtitle">
+                  Select a language from the menu to explore code examples and
+                  references
+                </p>
+                <div class="content">
+                  <div class="columns is-multiline">
+                    <div class="column is-6">
+                      <div class="box language-preview">
+                        <strong>Go</strong> - Variables, Functions, Structs,
+                        Interfaces, Concurrency, Error Handling
+                      </div>
+                    </div>
+                    <div class="column is-6">
+                      <div class="box language-preview">
+                        <strong>Python</strong> - Data Types, Functions,
+                        Classes, Modules, Exceptions, Context Managers
+                      </div>
+                    </div>
+                    <div class="column is-6">
+                      <div class="box language-preview">
+                        <strong>JavaScript</strong> - Variables, Functions,
+                        Objects, Arrays, Promises, Async/Await
+                      </div>
+                    </div>
+                    <div class="column is-6">
+                      <div class="box language-preview">
+                        <strong>TypeScript</strong> - Types, Interfaces,
+                        Generics
+                      </div>
+                    </div>
+                    <div class="column is-6">
+                      <div class="box language-preview">
+                        <strong>Rust</strong> - Ownership, Borrowing, Structs
+                      </div>
+                    </div>
+                    <div class="column is-6">
+                      <div class="box language-preview">
+                        <strong>Ruby</strong> - Blocks & Procs, Classes, Symbols
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="content has-text-centered">
+        <p>
+          <strong>CodeRef</strong> - A comprehensive programming reference
+          guide. The source code is licensed
+          <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
+        </p>
+        <p>
+          <a href="#"><i class="fab fa-github fa-2x"></i></a>
+          <a href="#"><i class="fab fa-twitter fa-2x"></i></a>
+          <a href="#"><i class="fab fa-linkedin fa-2x"></i></a>
+        </p>
+      </div>
+    </footer>
+
+    <button class="button is-info is-hidden" id="back-to-top-btn">
+      <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script src="static/js/app.js?v=6"></script>
+  </body>
+</html>

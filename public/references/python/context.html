@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Context Managers</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">Python Context Managers</h1>
+            <p class="subtitle">Master resource management with the `with` statement, custom context managers, and the `contextlib` module.</p>
+            <p>A context manager is an object that defines a temporary context for a block of code. They are most commonly used with the <code>with</code> statement and are brilliant for ensuring that resources are properly acquired and, more importantly, released, even if errors occur.</p>
+
+            <h2 class="title is-3">1. The `with` Statement</h2>
+            <p>The <code>with</code> statement simplifies resource management by guaranteeing that cleanup code is executed. The most common example is working with files.</p>
+            <pre><code class="language-python"># The old, verbose, and risky way
+file = open('example.txt', 'w')
+try:
+    file.write('Hello, World!')
+finally:
+    # This cleanup code must always be run, even if an error occurs in the try block.
+    file.close()
+
+# The modern, Pythonic way using a context manager
+with open('example.txt', 'w') as file:
+    file.write('Hello, World!')
+# The file is automatically closed when the 'with' block is exited.
+# This is safer, cleaner, and less error-prone.
+</code></pre>
+            <div class="notification is-info">
+                <strong>Key Insight:</strong> The <code>with</code> statement provides a reliable way to manage resources. It ensures that cleanup logic (like closing a file or releasing a lock) is always executed, preventing resource leaks.
+            </div>
+
+            <h2 class="title is-3">2. Creating a Class-Based Context Manager</h2>
+            <p>You can create your own context managers by defining a class with two special "dunder" methods: <code>__enter__</code> and <code>__exit__</code>.</p>
+            <ul>
+                <li><code>__enter__</code>: Called when entering the <code>with</code> block. Its return value is bound to the variable after <code>as</code>.</li>
+                <li><code>__exit__</code>: Called when exiting the <code>with</code> block. It receives information about any exceptions that occurred and performs the cleanup.</li>
+            </ul>
+            <pre><code class="language-python">class DatabaseConnection:
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+        self.connection = None
+    
+    def __enter__(self):
+        """Acquire the resource and return it."""
+        print(f"Connecting to database at {self.host}:{self.port}...")
+        self.connection = {"status": "connected", "data": []} # Simulate a connection object
+        return self.connection  # This value is assigned to the 'as' variable
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Release the resource."""
+        print("Closing database connection...")
+        # Here you would close the actual connection
+        self.connection = None
+        
+        # exc_type, exc_val, and exc_tb will be None if no exception occurred.
+        if exc_type is not None:
+            print(f"An exception occurred: {exc_type.__name__}: {exc_val}")
+        
+        # Return False (or any falsy value) to propagate the exception.
+        # Return True to suppress the exception.
+        return False
+
+# Usage:
+with DatabaseConnection('localhost', 5432) as conn:
+    print(f"Connection status: {conn['status']}")
+    conn['data'].append("some data")
+    # The connection will be closed automatically when this block is exited.
+</code></pre>
+
+            <h2 class="title is-3">3. Creating a Function-Based Context Manager</h2>
+            <p>For simpler cases, the <code>@contextmanager</code> decorator from the <code>contextlib</code> module provides a more concise way to create a context manager using a generator function.</p>
+            <pre><code class="language-python">from contextlib import contextmanager
+import time
+
+@contextmanager
+def timer(label: str):
+    """A simple context manager to measure the execution time of a code block."""
+    start_time = time.perf_counter()
+    try:
+        # The 'yield' is where the code inside the 'with' block will run.
+        yield
+    finally:
+        # This code runs after the 'with' block is finished.
+        end_time = time.perf_counter()
+        print(f"{label}: {end_time - start_time:.4f} seconds")
+
+# Usage:
+with timer("Data processing task"):
+    # Simulate some work
+    time.sleep(0.5)
+    _ = [i**2 for i in range(100000)]
+
+# Output will be similar to:
+# Data processing task: 0.5084 seconds
+</code></pre>
+
+            <h2 class="title is-3">4. Handling Multiple Contexts</h2>
+            <p>You can manage multiple context managers in a single <code>with</code> statement, which is cleaner than nesting them.</p>
+            <pre><code class="language-python"># The modern way (Python 3+)
+with open('input.txt', 'r') as infile, open('output.txt', 'w') as outfile:
+    content = infile.read()
+    outfile.write(content.upper())
+
+# For a dynamic number of contexts, use contextlib.ExitStack
+from contextlib import ExitStack
+
+def process_files(filenames):
+    with ExitStack() as stack:
+        # Enter the context for each file and keep track of the file objects
+        files = [stack.enter_context(open(fname, 'r')) for fname in filenames]
+        
+        # Process all open files
+        for f in files:
+            print(f"--- Reading from {f.name} ---")
+            print(f.readline().strip())
+        
+        # All files are automatically closed when the ExitStack is exited.
+</code></pre>
+
+            <h2 class="title is-3">5. Asynchronous Context Managers (Python 3.7+)</h2>
+            <p>For use with <code>async/await</code>, you can create asynchronous context managers using <code>async with</code>. These are defined with <code>__aenter__</code> and <code>__aexit__</code> methods.</p>
+            <pre><code class="language-python">import asyncio
+
+class AsyncDatabase:
+    async def __aenter__(self):
+        print("Connecting to async database...")
+        await asyncio.sleep(0.1) # Simulate async I/O
+        print("Connected.")
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        print("Disconnecting from async database...")
+        await asyncio.sleep(0.1) # Simulate async I/O
+        print("Disconnected.")
+    
+    async def query(self, sql):
+        await asyncio.sleep(0.2)
+        return f"Results for query: '{sql}'"
+
+async def main():
+    async with AsyncDatabase() as db:
+        result = await db.query("SELECT * FROM users")
+        print(result)
+
+asyncio.run(main())
+</code></pre>
+            <div class="notification is-info">
+                <strong>Best Practice:</strong> Use <code>@contextmanager</code> for simple, synchronous context managers and a class for more complex ones (e.g., those that manage state). For async code, use <code>@asynccontextmanager</code> or a class with <code>__aenter__</code>/<code>__aexit__</code>.
+            </div>
+        </div>
+    </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

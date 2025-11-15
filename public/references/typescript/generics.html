@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Generics</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">TypeScript Generics</h1>
+
+            <p>
+                Generics allow you to create reusable components that can work with a
+                variety of types rather than a single one. This allows users to consume
+                these components and use their own types.
+            </p>
+
+            <h2 class="subtitle">Generic Functions</h2>
+            <p>Create a function that works with any type:</p>
+            <pre><code class="language-typescript">function identity&lt;T&gt;(arg: T): T {
+  return arg;
+}
+
+let output1 = identity&lt;string&gt;("myString");
+let output2 = identity&lt;number&gt;(42);
+
+// Type argument inference
+let output3 = identity("hello"); // Type inferred as string</code></pre>
+
+            <h2 class="subtitle">Generic Interfaces</h2>
+            <p>Define interfaces that use type parameters:</p>
+            <pre><code class="language-typescript">interface GenericIdentityFn&lt;T&gt; {
+  (arg: T): T;
+}
+
+let myIdentity: GenericIdentityFn&lt;number&gt; = identity;
+myIdentity(123);</code></pre>
+
+            <h2 class="subtitle">Generic Classes</h2>
+            <p>Create classes that work with multiple types:</p>
+            <pre><code class="language-typescript">class GenericNumber&lt;T&gt; {
+  zeroValue: T;
+  add: (x: T, y: T) =&gt; T;
+}
+
+let myGenericNumber = new GenericNumber&lt;number&gt;();
+myGenericNumber.zeroValue = 0;
+myGenericNumber.add = function(x, y) { return x + y; };
+
+let stringNumeric = new GenericNumber&lt;string&gt;();
+stringNumeric.zeroValue = "";
+stringNumeric.add = function(x, y) { return x + y; };</code></pre>
+
+            <h2 class="subtitle">Generic Constraints</h2>
+            <p>Restrict generics to types that have certain properties:</p>
+            <pre><code class="language-typescript">interface Lengthwise {
+  length: number;
+}
+
+function loggingIdentity&lt;T extends Lengthwise&gt;(arg: T): T {
+  console.log(arg.length); // Now we know it has a .length property
+  return arg;
+}
+
+loggingIdentity({ length: 10, value: 3 });
+// loggingIdentity(3); // Error: number doesn't have .length</code></pre>
+
+            <h2 class="subtitle">Using Type Parameters in Constraints</h2>
+            <p>Declare a type parameter that is constrained by another type parameter:</p>
+            <pre><code class="language-typescript">function getProperty&lt;T, K extends keyof T&gt;(obj: T, key: K) {
+  return obj[key];
+}
+
+let x = { a: 1, b: 2, c: 3, d: 4 };
+getProperty(x, "a");
+// getProperty(x, "m"); // Error: Argument of type 'm' isn't assignable</code></pre>
+        </div>
+        <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+          <a href="/references/typescript/interfaces.html" class="pagination-next">Next: Interfaces</a>
+        </nav>
+    </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

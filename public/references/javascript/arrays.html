@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Arrays</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">JavaScript Arrays</h1>
+            <p class="subtitle">A comprehensive guide to array methods, iteration, transformation, and modern array patterns in JavaScript.</p>
+            <p>Arrays are one of the most fundamental data structures in JavaScript, allowing you to store and manipulate ordered collections of data. Mastering array methods is crucial for writing efficient, clean, and powerful code.</p>
+
+            <h2 class="title is-3">1. Creating Arrays</h2>
+            <p>There are several ways to create arrays in JavaScript, with the array literal being the most common and preferred method.</p>
+            <pre><code class="language-javascript">// 1. Array literal (most common and simple)
+const fruits = ["apple", "banana", "cherry"];
+const mixed = [1, "hello", true, { name: "Alice" }];
+
+// 2. Array.from() - Creates an array from an array-like or iterable object.
+const fromString = Array.from("hello"); // ["h", "e", "l", "l", "o"]
+const fromSet = Array.from(new Set([1, 2, 2, 3])); // [1, 2, 3]
+const fromLength = Array.from({ length: 3 }, (_, i) => `Item ${i + 1}`); // ["Item 1", "Item 2", "Item 3"]
+
+// 3. Spread syntax (...) - Useful for creating a shallow copy or combining arrays.
+const fruitsCopy = [...fruits];
+const moreFruits = ["date", "elderberry"];
+const combined = [...fruits, ...moreFruits];
+</code></pre>
+            <div class="notification is-warning">
+                <strong>Note:</strong> Avoid using the <code>new Array()</code> constructor. It has inconsistent behavior (<code>new Array(5)</code> creates an empty array of length 5, while <code>new Array(1, 2)</code> creates the array <code>[1, 2]</code>). Use array literals or <code>Array.from()</code> instead.
+            </div>
+
+            <h2 class="title is-3">2. Accessing & Modifying Elements</h2>
+            <p>You can access array elements using their zero-based index. Many methods modify the array in-place (mutating methods), while others return a new array (immutable methods).</p>
+            <pre><code class="language-javascript">const fruits = ["apple", "banana", "cherry"];
+
+// Access by index
+console.log(fruits[0]);     // "apple"
+console.log(fruits.at(-1)); // "cherry" (ES2022 feature for accessing from the end)
+
+// Modify an element
+fruits[1] = "blueberry"; // fruits is now ["apple", "blueberry", "cherry"]
+
+// --- Mutating Methods ---
+
+// Add elements
+fruits.push("date");        // Adds to the end
+fruits.unshift("avocado");  // Adds to the beginning (can be slow on large arrays)
+
+// Remove elements
+const last = fruits.pop();  // Removes from the end
+const first = fruits.shift(); // Removes from the beginning (can be slow on large arrays)
+
+// splice() - The swiss army knife for adding/removing elements at any position
+const months = ['Jan', 'March', 'April', 'June'];
+months.splice(1, 0, 'Feb'); // Inserts at index 1: ["Jan", "Feb", "March", "April", "June"]
+months.splice(4, 1, 'May'); // Replaces 1 element at index 4: ["Jan", "Feb", "March", "April", "May"]
+</code></pre>
+
+            <h2 class="title is-3">3. Iteration Methods</h2>
+            <p>These are some of the most powerful and commonly used array methods. They allow you to iterate over an array and perform transformations, filtering, and aggregations without needing a manual <code>for</code> loop.</p>
+            <pre><code class="language-javascript">const numbers = [1, 2, 3, 4, 5];
+
+// forEach() - Executes a function for each element. Does not return a value.
+numbers.forEach((num, index) => {
+    console.log(`Element at index ${index} is ${num}`);
+});
+
+// map() - Creates a new array by transforming every element.
+const doubled = numbers.map(n => n * 2); // [2, 4, 6, 8, 10]
+
+// filter() - Creates a new array with only the elements that pass a test.
+const evens = numbers.filter(n => n % 2 === 0); // [2, 4]
+
+// find() - Returns the first element that passes a test.
+const found = numbers.find(n => n > 3); // 4
+
+// reduce() - Accumulates the array into a single value.
+const sum = numbers.reduce((accumulator, current) => accumulator + current, 0); // 15
+const max = numbers.reduce((a, b) => Math.max(a, b)); // 5
+</code></pre>
+            <div class="notification is-info">
+                <strong>Best Practice:</strong> Prefer using immutable iteration methods like <code>map</code>, <code>filter</code>, and <code>reduce</code> over manual <code>for</code> loops. They are more declarative, less error-prone, and can be chained together for expressive data transformations.
+            </div>
+
+            <h2 class="title is-3">4. Searching & Sorting</h2>
+            <p>Methods for finding elements or reordering the array.</p>
+            <pre><code class="language-javascript">const arr = [3, 1, 4, 1, 5, 9, 2, 6];
+
+// includes() - Check if an element exists. Returns true or false.
+console.log(arr.includes(5));    // true
+
+// indexOf() / lastIndexOf() - Find the index of an element. Returns -1 if not found.
+console.log(arr.indexOf(1));     // 1 (first occurrence)
+console.log(arr.lastIndexOf(1)); // 3 (last occurrence)
+
+// sort() - Sorts the array in-place (mutates the original array!).
+// Always provide a compare function for numbers.
+const sorted = [...arr].sort((a, b) => a - b); // Use spread to create a copy first
+// sorted is [1, 1, 2, 3, 4, 5, 6, 9]
+
+// Sorting an array of objects
+const people = [
+    { name: "Alice", age: 30 },
+    { name: "Bob", age: 25 },
+];
+people.sort((a, b) => a.age - b.age); // Sorts by age, ascending
+
+// reverse() - Reverses the array in-place (mutates!).
+const reversed = [...arr].reverse(); // Create a copy first
+</code></pre>
+
+            <h2 class="title is-3">5. Creating New Arrays from Existing Ones</h2>
+            <p>These methods allow you to transform or combine arrays without modifying the originals.</p>
+            <pre><code class="language-javascript">const numbers = [1, 2, 3, 4, 5];
+
+// slice() - Extracts a portion of an array into a new array.
+const sliced = numbers.slice(1, 4); // [2, 3, 4] (from index 1 up to, but not including, index 4)
+const copy = numbers.slice();       // Creates a shallow copy of the entire array.
+
+// concat() - Merges two or more arrays.
+const moreNumbers = [6, 7];
+const combined = numbers.concat(moreNumbers); // [1, 2, 3, 4, 5, 6, 7]
+// The spread syntax is often preferred for this:
+const combinedSpread = [...numbers, ...moreNumbers];
+
+// flat() - Creates a new array with all sub-array elements concatenated into it.
+const nested = [1, [2, 3], [4, [5]]];
+console.log(nested.flat());    // [1, 2, 3, 4, [5]] (flattens one level)
+console.log(nested.flat(2));   // [1, 2, 3, 4, 5] (flattens two levels)
+
+// flatMap() - A combination of map() and flat() in one step.
+const sentences = ["hello world", "how are you"];
+const words = sentences.flatMap(sentence => sentence.split(" ")); // ["hello", "world", "how", "are", "you"]
+</code></pre>
+
+            <h2 class="title is-3">6. Array Destructuring (ES6)</h2>
+            <p>A powerful and concise way to extract values from an array into distinct variables.</p>
+            <pre><code class="language-javascript">const arr = [1, 2, 3, 4, 5];
+
+// Basic destructuring
+const [first, second] = arr; // first = 1, second = 2
+
+// Skip elements with a comma
+const [a, , c] = arr; // a = 1, c = 3
+
+// Capture the rest of the array with the rest operator (...)
+const [head, ...tail] = arr; // head = 1, tail = [2, 3, 4, 5]
+
+// Swapping variables easily
+let p = 1, q = 2;
+[p, q] = [q, p]; // p is now 2, q is now 1
+</code></pre>
+
+            <h2 class="title is-3">7. Advanced Patterns & Best Practices</h2>
+            <div class="notification is-info">
+                <ul>
+                    <li><strong>Prefer immutable methods:</strong> Methods like <code>map</code>, <code>filter</code>, and <code>slice</code> that return new arrays are safer and lead to more predictable code than mutating methods like <code>sort</code>, <code>splice</code>, or <code>reverse</code>.</li>
+                    <li><strong>Use <code>const</code> for arrays:</strong> This prevents you from accidentally reassigning the variable to a completely new array, though it doesn't prevent you from modifying the array's contents.</li>
+                    <li><strong>Chain methods for readability:</strong> Chaining methods like <code>filter</code> and <code>map</code> can make complex data transformations very expressive.</li>
+                    <li><strong>Use <code>Set</code> for unique values:</strong> The most efficient way to get unique values from an array is to convert it to a <code>Set</code> and back.</li>
+                </ul>
+            </div>
+            <pre><code class="language-javascript">// Remove duplicates from an array
+const duplicates = [1, 2, 2, 3, 3, 3, 4];
+const unique = [...new Set(duplicates)]; // [1, 2, 3, 4]
+
+// Grouping an array of objects by a property
+const items = [
+    { category: "fruit", name: "apple" },
+    { category: "fruit", name: "banana" },
+    { category: "veggie", name: "carrot" }
+];
+const grouped = items.reduce((acc, item) => {
+    const key = item.category;
+    (acc[key] = acc[key] || []).push(item);
+    return acc;
+}, {});
+/* grouped is:
+{
+  fruit: [ { category: 'fruit', name: 'apple' }, { category: 'fruit', name: 'banana' } ],
+  veggie: [ { category: 'veggie', name: 'carrot' } ]
+}
+*/
+</code></pre>
+        </div>
+    </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Go Structs</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+    />
+    <link rel="stylesheet" href="/static/css/prism-overrides.css" />
+  </head>
+  <body>
+    <div class="container">
+      <section class="section">
+        <div class="content">
+          <h1 class="title">Structs in Go</h1>
+
+          <p>
+            Structs are Go's primary mechanism for creating custom data types that group
+            related data together. Unlike object-oriented languages with classes, Go
+            uses structs combined with methods to achieve similar functionality in a
+            simpler, more explicit way. Structs are the foundation for building complex,
+            maintainable applications in Go.
+          </p>
+
+          <h2 class="subtitle">Basic Struct Definition</h2>
+
+          <p>
+            A struct is defined using the <code>type</code> keyword followed by the
+            struct name and field declarations. Fields can be of any type, including
+            other structs, pointers, slices, maps, and interfaces.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import "fmt"
+
+// Basic struct definition
+type Person struct {
+    Name string
+    Age  int
+}
+
+// Struct with multiple field types
+type Employee struct {
+    ID        int
+    FirstName string
+    LastName  string
+    Email     string
+    Salary    float64
+    IsActive  bool
+}
+
+// Struct with embedded types
+type Address struct {
+    Street  string
+    City    string
+    State   string
+    ZipCode string
+}
+
+type Contact struct {
+    Name    string
+    Phone   string
+    Address Address  // Nested struct
+}
+
+func main() {
+    // Create struct with field names (recommended)
+    p1 := Person{
+        Name: "Alice",
+        Age:  30,
+    }
+    fmt.Printf("%+v\n", p1)  // %+v prints field names
+
+    // Create struct with positional values (not recommended)
+    p2 := Person{"Bob", 25}
+    fmt.Println(p2)
+
+    // Zero value: all fields get their zero values
+    var p3 Person
+    fmt.Printf("Zero value: %+v\n", p3)  // {Name: Age:0}
+
+    // Accessing and modifying fields
+    p1.Name = "Alice Smith"
+    p1.Age++
+    fmt.Printf("Updated: %+v\n", p1)
+
+    // Nested struct
+    contact := Contact{
+        Name:  "Charlie",
+        Phone: "555-1234",
+        Address: Address{
+            Street:  "123 Main St",
+            City:    "Boston",
+            State:   "MA",
+            ZipCode: "02101",
+        },
+    }
+    fmt.Printf("Lives in %s, %s\n", contact.Address.City, contact.Address.State)
+}
+</code></pre>
+
+          <p>
+            <strong>Field Visibility:</strong> Struct fields starting with uppercase
+            letters are exported (public) and accessible from other packages. Lowercase
+            fields are unexported (private) and only accessible within the same package.
+          </p>
+
+          <h2 class="subtitle">Pointers to Structs</h2>
+
+          <p>
+            Pointers to structs are extremely common in Go. They allow you to pass
+            structs efficiently without copying all their data, and enable methods to
+            modify the original struct. Go automatically dereferences struct pointers,
+            making them convenient to use.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import "fmt"
+
+type Rectangle struct {
+    Width  float64
+    Height float64
+}
+
+func main() {
+    // Create a pointer to a struct using &
+    rect1 := &Rectangle{Width: 10, Height: 5}
+    
+    // Go automatically dereferences, no need for (*rect1).Width
+    fmt.Printf("Width: %.2f, Height: %.2f\n", rect1.Width, rect1.Height)
+    
+    // Modify through pointer
+    rect1.Width = 20
+    fmt.Printf("New width: %.2f\n", rect1.Width)
+    
+    // Create struct value, then take address
+    rect2 := Rectangle{Width: 15, Height: 8}
+    rectPtr := &rect2
+    rectPtr.Height = 10
+    fmt.Printf("rect2 after modification: %+v\n", rect2)
+    
+    // Using new() allocates memory and returns pointer
+    rect3 := new(Rectangle)  // All fields are zero values
+    rect3.Width = 30
+    rect3.Height = 15
+    fmt.Printf("rect3: %+v\n", rect3)
+    
+    // Passing by pointer vs by value
+    modifyByValue(rect2)
+    fmt.Printf("After modifyByValue: %+v\n", rect2)  // Unchanged
+    
+    modifyByPointer(&rect2)
+    fmt.Printf("After modifyByPointer: %+v\n", rect2)  // Modified
+}
+
+// Takes a copy of the struct (expensive for large structs)
+func modifyByValue(r Rectangle) {
+    r.Width = 100  // Only modifies the copy
+}
+
+// Takes a pointer (efficient, can modify original)
+func modifyByPointer(r *Rectangle) {
+    r.Width = 100  // Modifies the original
+}
+</code></pre>
+
+          <p>
+            <strong>Performance Tip:</strong> For structs larger than a few fields,
+            always use pointers to avoid expensive copies. This is especially important
+            when passing structs to functions or storing them in slices.
+          </p>
+
+          <h2 class="subtitle">Methods on Structs</h2>
+
+          <p>
+            Methods are functions with a special receiver argument that appears between
+            <code>func</code> and the method name. Methods can have either value
+            receivers or pointer receivers, each with different semantics.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "math"
+)
+
+type Circle struct {
+    X      float64
+    Y      float64
+    Radius float64
+}
+
+// Value receiver - receives a copy of the struct
+func (c Circle) Area() float64 {
+    return math.Pi * c.Radius * c.Radius
+}
+
+// Value receiver - cannot modify original
+func (c Circle) ScaleValue(factor float64) {
+    c.Radius *= factor  // Only modifies the copy
+}
+
+// Pointer receiver - can modify the original struct
+func (c *Circle) Scale(factor float64) {
+    c.Radius *= factor  // Modifies the original
+}
+
+// Pointer receiver for efficiency (large struct)
+func (c *Circle) Move(dx, dy float64) {
+    c.X += dx
+    c.Y += dy
+}
+
+// Method that returns a new instance
+func (c Circle) Translated(dx, dy float64) Circle {
+    return Circle{
+        X:      c.X + dx,
+        Y:      c.Y + dy,
+        Radius: c.Radius,
+    }
+}
+
+func main() {
+    circle := Circle{X: 0, Y: 0, Radius: 5}
+    
+    // Call method with value receiver
+    area := circle.Area()
+    fmt.Printf("Area: %.2f\n", area)
+    
+    // This doesn't modify the original
+    circle.ScaleValue(2)
+    fmt.Printf("After ScaleValue: %+v\n", circle)  // Radius still 5
+    
+    // This modifies the original
+    circle.Scale(2)
+    fmt.Printf("After Scale: %+v\n", circle)  // Radius now 10
+    
+    // Move the circle
+    circle.Move(10, 15)
+    fmt.Printf("After Move: %+v\n", circle)
+    
+    // Get a new translated circle
+    newCircle := circle.Translated(5, 5)
+    fmt.Printf("Original: %+v\n", circle)
+    fmt.Printf("Translated: %+v\n", newCircle)
+}
+</code></pre>
+
+          <p>
+            <strong>Receiver Choice:</strong> Use pointer receivers when the method
+            needs to modify the receiver, when the struct is large (avoid copying), or
+            when some methods already use pointer receivers (for consistency). Use value
+            receivers for small, immutable structs.
+          </p>
+
+          <h2 class="subtitle">Struct Embedding and Composition</h2>
+
+          <p>
+            Go doesn't have inheritance, but it has something more flexible: embedding. 
+            When you embed a struct, all its fields and methods become part of the outer
+            struct. This enables composition patterns that are often clearer than
+            traditional inheritance.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import "fmt"
+
+// Base types
+type Engine struct {
+    Horsepower int
+    Type       string
+}
+
+func (e Engine) Start() {
+    fmt.Printf("Starting %s engine (%d HP)\n", e.Type, e.Horsepower)
+}
+
+func (e Engine) Stop() {
+    fmt.Println("Engine stopped")
+}
+
+type GPS struct {
+    Lat  float64
+    Long float64
+}
+
+func (g GPS) CurrentLocation() string {
+    return fmt.Sprintf("%.4f, %.4f", g.Lat, g.Long)
+}
+
+// Embedded struct - inherits fields and methods
+type Car struct {
+    Engine          // Anonymous field - embedding
+    GPS             // Embed GPS
+    Make   string
+    Model  string
+    Year   int
+}
+
+// Car can have its own methods too
+func (c Car) Info() string {
+    return fmt.Sprintf("%d %s %s", c.Year, c.Make, c.Model)
+}
+
+// Method can be overridden
+func (c Car) Start() {
+    fmt.Printf("Starting %s...\n", c.Info())
+    c.Engine.Start()  // Call embedded method explicitly
+    fmt.Println("Car is ready to drive")
+}
+
+// Nested vs Anonymous embedding
+type Vehicle struct {
+    engine Engine  // Named field - NOT embedding
+}
+
+func main() {
+    car := Car{
+        Engine: Engine{
+            Horsepower: 300,
+            Type:       "V6",
+        },
+        GPS: GPS{
+            Lat:  42.3601,
+            Long: -71.0589,
+        },
+        Make:  "Toyota",
+        Model: "Camry",
+        Year:  2024,
+    }
+    
+    // Can access embedded fields directly
+    fmt.Printf("Horsepower: %d\n", car.Horsepower)
+    fmt.Printf("Location: %s\n", car.CurrentLocation())
+    
+    // Can access embedded fields explicitly
+    fmt.Printf("Engine type: %s\n", car.Engine.Type)
+    
+    // Call methods
+    car.Start()  // Calls Car's Start method
+    car.Stop()   // Calls Engine's Stop method (promoted)
+    
+    fmt.Println(car.Info())
+}
+</code></pre>
+
+          <p>
+            <strong>Embedding vs Composition:</strong> Embedding (anonymous fields)
+            promotes the embedded type's methods to the outer type. Named fields require
+            explicit access. Choose embedding when you want the outer type to "act like"
+            the embedded type.
+          </p>
+
+          <h2 class="subtitle">Struct Tags and Reflection</h2>
+
+          <p>
+            Struct tags are metadata attached to struct fields, commonly used for
+            JSON/XML encoding, database mapping, and validation. They're accessed via
+            reflection and are essential for working with APIs and databases.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import (
+    "encoding/json"
+    "fmt"
+)
+
+// Struct with tags for JSON marshaling
+type User struct {
+    ID        int    `json:"id"`
+    Username  string `json:"username"`
+    Email     string `json:"email"`
+    Password  string `json:"-"`  // Never marshal this field
+    FirstName string `json:"first_name,omitempty"`  // Omit if empty
+    LastName  string `json:"last_name,omitempty"`
+    IsActive  bool   `json:"is_active"`
+    Metadata  map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// Multiple tags for different purposes
+type Product struct {
+    ID          int     `json:"id" db:"product_id" validate:"required"`
+    Name        string  `json:"name" db:"product_name" validate:"required,min=3"`
+    Price       float64 `json:"price" db:"price" validate:"required,gt=0"`
+    Description string  `json:"description,omitempty" db:"description"`
+}
+
+func main() {
+    user := User{
+        ID:        1,
+        Username:  "alice",
+        Email:     "alice@example.com",
+        Password:  "secret123",  // Won't appear in JSON
+        FirstName: "Alice",
+        IsActive:  true,
+    }
+    
+    // Marshal to JSON
+    jsonData, err := json.MarshalIndent(user, "", "  ")
+    if err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
+    fmt.Println("JSON output:")
+    fmt.Println(string(jsonData))
+    
+    // Unmarshal from JSON
+    jsonInput := `{
+        "id": 2,
+        "username": "bob",
+        "email": "bob@example.com",
+        "first_name": "Bob",
+        "last_name": "Smith",
+        "is_active": false
+    }`
+    
+    var newUser User
+    err = json.Unmarshal([]byte(jsonInput), &newUser)
+    if err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
+    fmt.Printf("\nUnmarshaled user: %+v\n", newUser)
+}
+</code></pre>
+
+          <p>
+            <strong>Common Tag Conventions:</strong> <code>json:"name"</code> for JSON
+            field names, <code>json:"-"</code> to skip a field,
+            <code>json:"name,omitempty"</code> to omit zero values,
+            <code>db:"column"</code> for database column mapping,
+            <code>validate:"rules"</code> for validation libraries.
+          </p>
+
+          <h2 class="subtitle">Constructor Functions and Validation</h2>
+
+          <p>
+            Go doesn't have constructors, but the convention is to create
+            <code>New</code> functions that initialize structs with default values and
+            perform validation. This ensures structs are always in a valid state.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import (
+    "errors"
+    "fmt"
+    "strings"
+)
+
+type Account struct {
+    id       int  // Unexported - can't be set directly
+    username string
+    email    string
+    balance  float64
+}
+
+// Constructor with validation
+func NewAccount(username, email string) (*Account, error) {
+    // Validate input
+    if len(username) < 3 {
+        return nil, errors.New("username must be at least 3 characters")
+    }
+    if !strings.Contains(email, "@") {
+        return nil, errors.New("invalid email address")
+    }
+    
+    // Return initialized struct
+    return &Account{
+        id:       generateID(),  // Internal ID generation
+        username: username,
+        email:    email,
+        balance:  0.0,  // Default balance
+    }, nil
+}
+
+// Constructor with options pattern
+type ServerConfig struct {
+    Host    string
+    Port    int
+    Timeout int
+    Debug   bool
+}
+
+func NewServerConfig() *ServerConfig {
+    return &ServerConfig{
+        Host:    "localhost",
+        Port:    8080,
+        Timeout: 30,
+        Debug:   false,
+    }
+}
+
+// Option function type
+type ServerOption func(*ServerConfig)
+
+// Option functions
+func WithHost(host string) ServerOption {
+    return func(c *ServerConfig) {
+        c.Host = host
+    }
+}
+
+func WithPort(port int) ServerOption {
+    return func(c *ServerConfig) {
+        c.Port = port
+    }
+}
+
+func WithDebug() ServerOption {
+    return func(c *ServerConfig) {
+        c.Debug = true
+    }
+}
+
+// Constructor with options
+func NewServer(opts ...ServerOption) *ServerConfig {
+    config := NewServerConfig()  // Start with defaults
+    
+    for _, opt := range opts {
+        opt(config)  // Apply each option
+    }
+    
+    return config
+}
+
+// Getters for unexported fields
+func (a *Account) Username() string {
+    return a.username
+}
+
+func (a *Account) Balance() float64 {
+    return a.balance
+}
+
+// Methods that modify state safely
+func (a *Account) Deposit(amount float64) error {
+    if amount <= 0 {
+        return errors.New("deposit amount must be positive")
+    }
+    a.balance += amount
+    return nil
+}
+
+func (a *Account) Withdraw(amount float64) error {
+    if amount <= 0 {
+        return errors.New("withdrawal amount must be positive")
+    }
+    if amount > a.balance {
+        return errors.New("insufficient funds")
+    }
+    a.balance -= amount
+    return nil
+}
+
+var idCounter = 0
+
+func generateID() int {
+    idCounter++
+    return idCounter
+}
+
+func main() {
+    // Using constructor
+    account, err := NewAccount("alice", "alice@example.com")
+    if err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
+    
+    account.Deposit(100.50)
+    account.Withdraw(25.00)
+    fmt.Printf("Account: %s, Balance: $%.2f\n", 
+        account.Username(), account.Balance())
+    
+    // Using options pattern
+    server := NewServer(
+        WithHost("0.0.0.0"),
+        WithPort(3000),
+        WithDebug(),
+    )
+    fmt.Printf("Server config: %+v\n", server)
+}
+</code></pre>
+
+          <p>
+            <strong>Best Practices:</strong> Use constructor functions to enforce
+            invariants, hide implementation details with unexported fields, provide
+            getters/setters for controlled access, and use the options pattern for
+            structs with many configuration parameters.
+          </p>
+
+          <h2 class="subtitle">Comparing and Copying Structs</h2>
+
+          <p>
+            Structs can be compared with <code>==</code> if all their fields are
+            comparable. Understanding struct comparison and copying behavior is
+            important for correct program logic.
+          </p>
+
+          <pre><code class="language-go">package main
+
+import "fmt"
+
+type Point struct {
+    X, Y int
+}
+
+type Person struct {
+    Name string
+    Age  int
+}
+
+type Data struct {
+    ID     int
+    Values []int  // Slice is not comparable
+}
+
+func main() {
+    // Struct comparison
+    p1 := Point{X: 1, Y: 2}
+    p2 := Point{X: 1, Y: 2}
+    p3 := Point{X: 2, Y: 3}
+    
+    fmt.Println(p1 == p2)  // true - same values
+    fmt.Println(p1 == p3)  // false - different values
+    
+    // Copying structs (makes a full copy)
+    person1 := Person{Name: "Alice", Age: 30}
+    person2 := person1  // Copy
+    person2.Age = 31
+    fmt.Printf("person1: %+v\n", person1)  // Age still 30
+    fmt.Printf("person2: %+v\n", person2)  // Age is 31
+    
+    // Pointer to struct (shares data)
+    ptr1 := &Person{Name: "Bob", Age: 25}
+    ptr2 := ptr1  // Copy pointer, not struct
+    ptr2.Age = 26
+    fmt.Printf("ptr1: %+v\n", ptr1)  // Age is 26 (shared)
+    fmt.Printf("ptr2: %+v\n", ptr2)  // Age is 26 (shared)
+    
+    // Uncomment to see compiler error:
+    // d1 := Data{ID: 1, Values: []int{1, 2}}
+    // d2 := Data{ID: 1, Values: []int{1, 2}}
+    // fmt.Println(d1 == d2)  // ERROR: invalid operation
+}
+</code></pre>
+
+          <p>
+            <strong>Comparability Rules:</strong> Structs are comparable if all fields
+            are comparable types (no slices, maps, or functions). Use custom comparison
+            functions for structs with non-comparable fields. Always copy by pointer
+            when you want to share data between variables.
+          </p>
+
+          <h2 class="subtitle">Best Practices</h2>
+
+          <ul>
+            <li>
+              <strong>Use descriptive names:</strong> Struct and field names should
+              clearly indicate their purpose.
+            </li>
+            <li>
+              <strong>Keep structs focused:</strong> Each struct should represent a
+              single concept or entity.
+            </li>
+            <li>
+              <strong>Prefer composition:</strong> Use embedding to build complex types
+              from simpler ones.
+            </li>
+            <li>
+              <strong>Validate in constructors:</strong> Always validate input and
+              return errors from New functions.
+            </li>
+            <li>
+              <strong>Use pointer receivers:</strong> For most methods, especially if
+              the struct is large or needs modification.
+            </li>
+            <li>
+              <strong>Hide implementation details:</strong> Use unexported fields and
+              provide getters/setters.
+            </li>
+            <li>
+              <strong>Document exported types:</strong> Add comments explaining the
+              struct's purpose and usage.
+            </li>
+            <li>
+              <strong>Use struct tags appropriately:</strong> Leverage tags for JSON,
+              database mapping, and validation.
+            </li>
+          </ul>
+        </div>
+      </section>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  </body>
+</html>

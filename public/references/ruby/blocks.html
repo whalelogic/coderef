@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruby Blocks, Procs, and Lambdas</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">Ruby Blocks, Procs, and Lambdas</h1>
+            <p class="subtitle">A guide to one of Ruby's most powerful features for creating flexible and expressive code.</p>
+            <p>Blocks are one of the most distinctive features of Ruby. They allow you to pass a chunk of code to a method to be executed at a later time. Procs and Lambdas are objects that encapsulate these blocks, allowing them to be stored in variables and passed around.</p>
+
+            <h2 class="title is-3">1. The `yield` Keyword</h2>
+            <p>The simplest way to work with a block is by using the <code>yield</code> keyword. A method that contains <code>yield</code> can be called with a block, and the <code>yield</code> keyword will transfer control to the block.</p>
+            <pre><code class="language-ruby">def my_method
+  puts "--- Top of method ---"
+  yield # Control is passed to the block
+  puts "--- Bottom of method ---"
+end
+
+my_method do
+  puts ">>> Inside the block! <<<"
+end
+
+# Output:
+# --- Top of method ---
+# >>> Inside the block! <<<
+# --- Bottom of method ---
+</code></pre>
+            <p>You can also pass arguments to <code>yield</code>, which will be passed to the block's parameters.</p>
+            <pre><code class="language-ruby">def greet
+  yield "Alice"
+  yield "Bob"
+end
+
+greet { |name| puts "Hello, #{name}!" }
+
+# Output:
+# Hello, Alice!
+# Hello, Bob!
+</code></pre>
+
+            <h2 class="title is-3">2. Blocks</h2>
+            <p>A block is a piece of code that can be passed to a method. It is not an object itself. Blocks are enclosed in either a <code>do...end</code> statement or curly braces <code>{}</code>. By convention, curly braces are used for single-line blocks, and <code>do...end</code> is used for multi-line blocks.</p>
+            <pre><code class="language-ruby"># Multi-line block using do...end
+[1, 2, 3].each do |number|
+  puts "The number is #{number}"
+end
+
+# Single-line block using curly braces
+[1, 2, 3].map { |number| number * 2 } #=> [2, 4, 6]
+
+# You can check if a block was passed with `block_given?`
+def optional_block
+  if block_given?
+    yield
+  else
+    puts "No block was provided."
+  end
+end
+
+optional_block { puts "A block was given." } #=> A block was given.
+optional_block #=> No block was provided.
+</code></pre>
+
+            <h2 class="title is-3">3. Procs</h2>
+            <p>A <code>Proc</code> (procedure) is an object that encapsulates a block of code. Unlike blocks, Procs are objects, so they can be stored in variables, passed to other methods, and called whenever you like.</p>
+            <pre><code class="language-ruby"># Creating a Proc
+my_proc = Proc.new { |name| puts "Hello, #{name}!" }
+
+# Calling a Proc
+my_proc.call("World") #=> Hello, World!
+my_proc.("World")     # Shorthand syntax
+my_proc["World"]      # Another shorthand
+
+# You can pass a Proc to a method that expects a block by using the `&` operator.
+def run_a_block(&block)
+  puts "About to run the block..."
+  block.call
+end
+
+my_proc = Proc.new { puts "This is from a Proc!" }
+run_a_block(&my_proc)
+</code></pre>
+
+            <h2 class="title is-3">4. Lambdas</h2>
+            <p>A lambda is a special kind of Proc object. It has a few key differences from a regular Proc, making it behave more like a traditional method.</p>
+            <pre><code class="language-ruby"># Creating a lambda with the lambda keyword
+my_lambda = lambda { |x, y| x + y }
+
+# Using the "stabby lambda" syntax (preferred)
+my_other_lambda = ->(x, y) { x + y }
+
+puts my_lambda.call(3, 4) #=> 7
+puts my_other_lambda.call(5, 6) #=> 11
+</code></pre>
+
+            <h2 class="title is-3">5. Proc vs. Lambda: Key Differences</h2>
+            <p>There are two main differences between Procs and Lambdas that are crucial to understand.</p>
+
+            <h3 class="title is-4">a) Argument Checking</h3>
+            <p>Lambdas are strict about the number of arguments they receive, just like methods. Procs are flexible and will assign <code>nil</code> to any missing arguments.</p>
+            <pre><code class="language-ruby"># A lambda will raise an ArgumentError if called with the wrong number of arguments.
+my_lambda = ->(name, age) { "Name: #{name}, Age: #{age}" }
+# my_lambda.call("Alice") #=> ArgumentError: wrong number of arguments (given 1, expected 2)
+
+# A Proc will simply assign nil to missing arguments.
+my_proc = Proc.new { |name, age| "Name: #{name}, Age: #{age}" }
+puts my_proc.call("Alice") #=> "Name: Alice, Age: " (age is nil)
+</code></pre>
+
+            <h3 class="title is-4">b) Return Behavior</h3>
+            <p>A <code>return</code> statement inside a lambda returns from the lambda itself. A <code>return</code> statement inside a Proc returns from the method where the Proc was called.</p>
+            <pre><code class="language-ruby">def method_with_lambda
+  my_lambda = -> { return "Returned from the lambda" }
+  my_lambda.call
+  return "Returned from the method" # This line is reached
+end
+
+def method_with_proc
+  my_proc = Proc.new { return "Returned from the proc" }
+  my_proc.call
+  return "Returned from the method" # This line is never reached
+end
+
+puts method_with_lambda #=> "Returned from the method"
+puts method_with_proc   #=> "Returned from the proc"
+</code></pre>
+            <div class="notification is-info">
+                <strong>Key Insight:</strong> Use a <strong>lambda</strong> when you want something that behaves like a method (strict argument checking, local return). Use a <strong>Proc</strong> when you want more flexibility with arguments or need to return from the enclosing method.
+            </div>
+
+            <h2 class="title is-3">6. Common Enumerable Methods with Blocks</h2>
+            <p>Blocks are most frequently used with Ruby's powerful Enumerable methods to iterate over collections.</p>
+            <pre><code class="language-ruby"># .map (or .collect) - Transforms each element and returns a new array.
+numbers = [1, 2, 3, 4]
+squares = numbers.map { |n| n * n } #=> [1, 4, 9, 16]
+
+# .select (or .filter) - Returns a new array containing only elements that pass a test.
+evens = numbers.select { |n| n.even? } #=> [2, 4]
+
+# .reduce (or .inject) - Accumulates all elements into a single value.
+sum = numbers.reduce(0) { |accumulator, current_number| accumulator + current_number } #=> 10
+</code></pre>
+        </div>
+    </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

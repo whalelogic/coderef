@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Variables</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">Variables in JavaScript</h1>
+            <p class="subtitle">A deep dive into ES6+ variable declarations, scoping, hoisting, and modern best practices.</p>
+
+            <p>
+                JavaScript is a dynamically typed language, meaning you don't have to specify the type of a variable when you declare it. The type is determined at runtime. This offers flexibility but also requires a solid understanding of how variables work to write clean, bug-free, and maintainable code.
+            </p>
+
+            <h2 class="title is-3">The Three Keywords: <code>var</code>, <code>let</code>, and <code>const</code></h2>
+            <p>
+                Modern JavaScript (ES6 and beyond) provides three keywords for declaring variables: <code>let</code>, <code>const</code>, and the older <code>var</code>. Each has different scoping rules and behaviors that are critical to understand.
+            </p>
+
+            <h3 class="title is-4"><code>var</code>: The Legacy Keyword</h3>
+            <p>
+                Before ES6 (2015), <code>var</code> was the only way to declare variables. It is <strong>function-scoped</strong>, meaning it is only confined to the function it was declared in, not to blocks like <code>if</code> statements or <code>for</code> loops. It also has some quirks, like hoisting, which can lead to unexpected behavior.
+            </p>
+            <div class="notification is-warning">
+                <strong>Best Practice:</strong> It is strongly recommended to avoid <code>var</code> in modern codebases in favor of <code>let</code> and <code>const</code> to prevent common bugs related to scope and hoisting.
+            </div>
+            <pre><code class="language-javascript">// 'var' is function-scoped, not block-scoped.
+function testVar() {
+    var x = 10;
+    if (true) {
+        var y = 20; // 'y' is accessible throughout the function
+        console.log(x); // 10
+    }
+    console.log(y); // 20 (leaks out of the if-block)
+}
+testVar();
+
+// 'var' is hoisted and initialized with 'undefined'.
+console.log(hoistedVar); // undefined (not a ReferenceError)
+var hoistedVar = "I'm hoisted";
+
+// 'var' can be redeclared in the same scope, which can cause bugs.
+var count = 5;
+var count = 10; // No error, 'count' is simply overwritten.
+console.log(count); // 10
+</code></pre>
+            <p>
+                <strong>Key Insight:</strong> The function-scoping of <code>var</code> is a common source of bugs. Variables can "leak" out of blocks, and redeclaring a variable doesn't produce an error, making it easy to accidentally overwrite variables. This can lead to unpredictable behavior in larger applications.
+            </p>
+
+            <h3 class="title is-4"><code>let</code>: The Modern, Re-assignable Variable</h3>
+            <p>
+                <code>let</code> is the modern replacement for <code>var</code>. It is <strong>block-scoped</strong>, meaning it's confined to the nearest curly braces <code>{}</code> (e.g., an <code>if</code> block or a <code>for</code> loop). This provides more predictable behavior and helps prevent bugs.
+            </p>
+            <pre><code class="language-javascript">// 'let' is block-scoped.
+let a = 1;
+if (true) {
+    let b = 2; // 'b' only exists within this block
+    console.log(a); // 1 (can access outer scope)
+    console.log(b); // 2
+}
+// console.log(b); // ReferenceError: b is not defined
+
+// 'let' cannot be redeclared in the same scope.
+let name = "Alice";
+// let name = "Bob"; // SyntaxError: Identifier 'name' has already been declared
+
+// It can be reassigned.
+name = "Bob"; // This is fine
+console.log(name); // "Bob"
+
+// Temporal Dead Zone (TDZ)
+// Accessing 'let' before declaration results in an error.
+// console.log(tdzVar); // ReferenceError: Cannot access 'tdzVar' before initialization
+let tdzVar = "Now initialized";
+</code></pre>
+            <p>
+                <strong>Best Practice:</strong> Use <code>let</code> when you know a variable's value will need to change, such as in a loop counter or for a value that gets updated over time. Its block-scoping makes it a safer and more predictable choice than <code>var</code>.
+            </p>
+
+            <h3 class="title is-4"><code>const</code>: The Modern, Constant Reference</h3>
+            <p>
+                <code>const</code> is also block-scoped, but it creates a read-only reference to a value. This means the variable cannot be reassigned. For primitive types (like numbers and strings), this makes the value immutable. For objects and arrays, the reference is immutable, but the contents of the object or array can still be changed.
+            </p>
+            <pre><code class="language-javascript">// 'const' must be initialized at declaration.
+const PI = 3.14159;
+// const GRAVITY; // SyntaxError: Missing initializer in const declaration
+
+// The reference cannot be reassigned.
+// PI = 3.14; // TypeError: Assignment to constant variable.
+
+// For objects and arrays, the content can be changed.
+const user = { name: "Alice" };
+user.name = "Bob"; // This is allowed
+user.age = 30;     // This is also allowed
+console.log(user); // { name: "Bob", age: 30 }
+
+// user = { name: "Charlie" }; // TypeError: Assignment to constant variable.
+
+const numbers = [1, 2, 3];
+numbers.push(4); // OK
+numbers[0] = 99; // OK
+// numbers = [4, 5, 6]; // TypeError
+
+// To make an object truly immutable, use Object.freeze().
+const config = Object.freeze({
+    API_URL: "https://api.example.com",
+    TIMEOUT: 5000
+});
+// config.TIMEOUT = 3000; // Fails silently (or throws TypeError in strict mode)
+</code></pre>
+            <p>
+                <strong>Best Practice:</strong> Prefer <code>const</code> by default for all variable declarations. This makes your code easier to reason about, as you know the variable's assignment won't change. Only use <code>let</code> if you specifically need to reassign the variable. This is a core principle of modern JavaScript development.
+            </p>
+
+            <h2 class="title is-3">Scoping Rules Explained</h2>
+            <p>JavaScript has three main types of scope: global, function, and block. Understanding scope is key to avoiding bugs and writing modular code.</p>
+            <pre><code class="language-javascript">// Global Scope: Accessible from anywhere in the code.
+const globalVar = "I'm global";
+
+function outerFunction() {
+    // Function Scope: Accessible only within this function.
+    const functionVar = "I'm in the function";
+
+    if (true) {
+        // Block Scope: Accessible only within this block.
+        let blockVar = "I'm in the block";
+        console.log(globalVar);   // Accessible
+        console.log(functionVar); // Accessible
+        console.log(blockVar);    // Accessible
+    }
+    // console.log(blockVar); // ReferenceError
+}
+outerFunction();
+// console.log(functionVar); // ReferenceError
+</code></pre>
+
+            <h2 class="title is-3">Hoisting: A JavaScript Quirk</h2>
+            <p>Hoisting is JavaScript's behavior of moving declarations to the top of their scope before code execution. However, the behavior differs between <code>var</code>, <code>let</code>, and <code>const</code>.</p>
+            <ul>
+                <li><strong><code>var</code></strong> declarations are hoisted and initialized with <code>undefined</code>.</li>
+                <li><strong><code>let</code> and <code>const</code></strong> declarations are hoisted but not initialized. They are in a "temporal dead zone" (TDZ) from the start of the block until the declaration is encountered.</li>
+            </ul>
+            <pre><code class="language-javascript">// 'var' is hoisted and initialized as undefined.
+console.log(myVar); // undefined
+var myVar = 5;
+
+// 'let' and 'const' are hoisted but not initialized.
+// console.log(myLet); // ReferenceError: Cannot access 'myLet' before initialization
+let myLet = 10;
+
+// Function declarations are fully hoisted (body and all).
+sayHello(); // "Hello!"
+function sayHello() {
+    console.log("Hello!");
+}
+
+// Function expressions are not hoisted.
+// sayGoodbye(); // TypeError: sayGoodbye is not a function
+var sayGoodbye = function() {
+    console.log("Goodbye!");
+};
+</code></pre>
+
+            <h2 class="title is-3">Destructuring Assignment</h2>
+            <p>A powerful feature of modern JavaScript, destructuring allows you to unpack values from arrays or properties from objects into distinct variables. This can make your code more concise and readable.</p>
+            <pre><code class="language-javascript">// Array Destructuring
+const colors = ["red", "green", "blue"];
+const [firstColor, secondColor] = colors;
+console.log(firstColor); // "red"
+
+// Object Destructuring
+const person = { name: "John Doe", age: 42 };
+const { name, age } = person;
+console.log(name); // "John Doe"
+
+// Renaming variables
+const { name: personName } = person;
+console.log(personName); // "John Doe"
+
+// Default values
+const { country = "USA" } = person;
+console.log(country); // "USA"
+</code></pre>
+
+            <h2 class="title is-3">Key Takeaways & Best Practices</h2>
+            <div class="notification is-info">
+                <ul>
+                    <li><strong>Prefer <code>const</code> by default.</strong> This ensures that you don't accidentally reassign variables.</li>
+                    <li><strong>Use <code>let</code> only for variables that need to be reassigned</strong>, like loop counters.</li>
+                    <li><strong>Avoid <code>var</code> completely</strong> in modern JavaScript to avoid its weird quirks with scoping and hoisting.</li>
+                    <li><strong>Keep variables in the smallest scope possible.</strong> This makes your code easier to manage and reduces the chance of naming conflicts.</li>
+                    <li><strong>Use descriptive names</strong> to make your code self-documenting.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

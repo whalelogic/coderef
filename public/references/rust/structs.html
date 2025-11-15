@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Structs</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">Rust Structs</h1>
+
+            <p>
+                Structs let you create custom types that group related data together.
+                They're similar to tuples, but each piece of data has a name.
+            </p>
+
+            <h2 class="subtitle">Defining Structs</h2>
+            <p>Define a struct using the struct keyword:</p>
+            <pre><code class="language-rust">struct User {
+    active: bool,
+    username: String,
+    email: String,
+    sign_in_count: u64,
+}
+
+fn main() {
+    let user1 = User {
+        email: String::from("someone@example.com"),
+        username: String::from("someusername123"),
+        active: true,
+        sign_in_count: 1,
+    };
+    
+    println!("User email: {}", user1.email);
+}</code></pre>
+
+            <h2 class="subtitle">Mutable Structs</h2>
+            <p>The entire struct must be mutable to change fields:</p>
+            <pre><code class="language-rust">fn main() {
+    let mut user1 = User {
+        email: String::from("someone@example.com"),
+        username: String::from("someusername123"),
+        active: true,
+        sign_in_count: 1,
+    };
+    
+    user1.email = String::from("anotheremail@example.com");
+}</code></pre>
+
+            <h2 class="subtitle">Struct Update Syntax</h2>
+            <p>Create instances from other instances:</p>
+            <pre><code class="language-rust">fn main() {
+    let user1 = User {
+        email: String::from("someone@example.com"),
+        username: String::from("someusername123"),
+        active: true,
+        sign_in_count: 1,
+    };
+    
+    let user2 = User {
+        email: String::from("another@example.com"),
+        ..user1  // Use remaining fields from user1
+    };
+}</code></pre>
+
+            <h2 class="subtitle">Tuple Structs</h2>
+            <p>Structs without named fields:</p>
+            <pre><code class="language-rust">struct Color(i32, i32, i32);
+struct Point(i32, i32, i32);
+
+fn main() {
+    let black = Color(0, 0, 0);
+    let origin = Point(0, 0, 0);
+    
+    println!("First color value: {}", black.0);
+}</code></pre>
+
+            <h2 class="subtitle">Unit-Like Structs</h2>
+            <p>Structs without any fields:</p>
+            <pre><code class="language-rust">struct AlwaysEqual;
+
+fn main() {
+    let subject = AlwaysEqual;
+}</code></pre>
+
+            <h2 class="subtitle">Method Syntax</h2>
+            <p>Define methods within an impl block:</p>
+            <pre><code class="language-rust">struct Rectangle {
+    width: u32,
+    height: u32,
+}
+
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+    
+    fn can_hold(&self, other: &Rectangle) -> bool {
+        self.width > other.width && self.height > other.height
+    }
+}
+
+fn main() {
+    let rect1 = Rectangle {
+        width: 30,
+        height: 50,
+    };
+    
+    println!("Area: {}", rect1.area());
+}</code></pre>
+
+            <h2 class="subtitle">Associated Functions</h2>
+            <p>Functions that don't take self as a parameter:</p>
+            <pre><code class="language-rust">impl Rectangle {
+    fn square(size: u32) -> Rectangle {
+        Rectangle {
+            width: size,
+            height: size,
+        }
+    }
+}
+
+fn main() {
+    let sq = Rectangle::square(3);
+}</code></pre>
+        </div>
+        <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+          <a href="/references/rust/ownership.html" class="pagination-previous">Previous: Ownership</a>
+        </nav>
+    </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

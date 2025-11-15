@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Functions</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">JavaScript Functions</h1>
+            <p class="subtitle">A comprehensive guide to function declarations, expressions, arrow functions, closures, higher-order functions, and asynchronous patterns.</p>
+
+            <h2 class="title is-3">1. Function Declarations vs. Expressions</h2>
+            <p>In JavaScript, functions are first-class citizens, meaning they can be treated like any other variable. They can be assigned to variables, passed as arguments, and returned from other functions. The two primary ways to create a function are declarations and expressions.</p>
+
+            <h3 class="title is-4">Function Declarations</h3>
+            <p>A function declaration is the most common way to define a function. It is defined with the <code>function</code> keyword, followed by a name, a list of parameters, and a function body. A key characteristic of function declarations is that they are <strong>hoisted</strong>, meaning they are moved to the top of their scope before code execution. This allows you to call a function before it is defined in the code.</p>
+            <pre><code class="language-javascript">// Function Declaration (hoisted)
+console.log(greet("Alice")); // Works because declarations are hoisted
+
+function greet(name) {
+    return `Hello, ${name}!`;
+}
+</code></pre>
+
+            <h3 class="title is-4">Function Expressions</h3>
+            <p>A function expression is created when a function is assigned to a variable. The function can be named or anonymous. Unlike declarations, function expressions are <strong>not hoisted</strong>. This means you cannot call a function expression before it is defined.</p>
+            <pre><code class="language-javascript">// Function Expression (not hoisted)
+// console.log(multiply(4, 5)); // Throws a ReferenceError
+
+const multiply = function(a, b) {
+    return a * b;
+};
+
+console.log(multiply(4, 5));  // 20
+
+// Named Function Expression (useful for debugging/recursion)
+const factorial = function fact(n) {
+    if (n <= 1) return 1;
+    return n * fact(n - 1); // Can reference itself by name
+};
+
+console.log(factorial(5));  // 120
+</code></pre>
+            <div class="notification is-info">
+                <strong>Best Practice:</strong> Prefer function expressions (especially with <code>const</code>) to avoid issues with hoisting and to encourage a more predictable, top-down code structure.
+            </div>
+
+            <h2 class="title is-3">2. Arrow Functions (ES6+)</h2>
+            <p>Arrow functions, introduced in ES6, provide a more concise syntax for writing functions. They also have a significant difference in how they handle the <code>this</code> keyword, which makes them incredibly useful in many scenarios, especially with callbacks.</p>
+            <pre><code class="language-javascript">// Basic arrow function
+const square = (x) => x * x;
+console.log(square(5));  // 25
+
+// Multiple parameters require parentheses
+const add = (a, b) => a + b;
+console.log(add(3, 4));  // 7
+
+// No parameters require empty parentheses
+const sayHello = () => "Hello!";
+console.log(sayHello());  // "Hello!"
+
+// Multi-line functions need curly braces and an explicit return
+const greetUser = (name) => {
+    const message = `Hello, ${name}!`;
+    return message.toUpperCase();
+};
+console.log(greetUser("Bob"));  // "HELLO, BOB!"
+
+// Returning an object literal requires wrapping in parentheses
+const createUser = (name, age) => ({ name, age });
+console.log(createUser("Charlie", 30));  // { name: 'Charlie', age: 30 }
+</code></pre>
+            <p>The most important feature of arrow functions is that they do not have their own <code>this</code> context. Instead, they inherit <code>this</code> from the surrounding (lexical) scope. This is a major advantage over regular functions, where <code>this</code> can change depending on how the function is called.</p>
+
+            <h2 class="title is-3">3. Parameters and Arguments</h2>
+            <p>JavaScript functions are incredibly flexible in how they handle parameters and arguments. ES6 introduced default parameters and rest parameters, which make functions even more powerful and readable.</p>
+            <pre><code class="language-javascript">// Default Parameters (ES6+)
+function welcome(name = "Guest") {
+    return `Welcome, ${name}!`;
+}
+console.log(welcome());       // "Welcome, Guest!"
+console.log(welcome("Eve"));  // "Welcome, Eve!"
+
+// Rest Parameters (...)
+// Gathers all remaining arguments into an array
+function sum(...numbers) {
+    return numbers.reduce((total, num) => total + num, 0);
+}
+console.log(sum(1, 2, 3));       // 6
+console.log(sum(10, 20, 30, 40)); // 100
+
+// The 'arguments' object (less common now)
+// An array-like object available in regular functions
+function logArguments() {
+  for (let i = 0; i < arguments.length; i++) {
+    console.log(arguments[i]);
+  }
+}
+logArguments('a', 'b', 'c'); // Logs 'a', 'b', 'c'
+</code></pre>
+
+            <h2 class="title is-3">4. <code>this</code> Binding</h2>
+            <p>The value of <code>this</code> is a common point of confusion in JavaScript. In regular functions, the value of <code>this</code> is determined by how the function is called (the "call site"). In arrow functions, <code>this</code> is determined by where the function is defined (lexical scope).</p>
+            <pre><code class="language-javascript">const person = {
+    name: "Diana",
+    // Regular function: 'this' is the object that called it
+    speak: function() {
+        console.log(`I am ${this.name}.`);
+    },
+    // Arrow function: 'this' is from the outer scope (in this case, global/window)
+    whisper: () => {
+        // 'this' here refers to the global object, not 'person'
+        console.log(`I am ${this.name}.`);
+    }
+};
+
+person.speak();   // "I am Diana."
+person.whisper(); // "I am undefined." (or the global name)
+
+// 'this' in a callback
+class Timer {
+    constructor() {
+        this.seconds = 0;
+    }
+    start() {
+        // Using an arrow function correctly binds 'this' to the Timer instance
+        setInterval(() => {
+            this.seconds++;
+            console.log(`${this.seconds} seconds have passed.`);
+        }, 1000);
+    }
+}
+// const myTimer = new Timer();
+// myTimer.start();
+</code></pre>
+            <div class="notification is-warning">
+                <strong>Key Insight:</strong> Use arrow functions for callbacks (like in <code>setInterval</code>, <code>.map()</code>, or event listeners) to avoid losing the context of <code>this</code>. Use regular functions for object methods when you need to access the object's properties via <code>this</code>.
+            </div>
+
+            <h2 class="title is-3">5. Closures</h2>
+            <p>A closure is a function that "remembers" the environment in which it was created. This means it has access to variables from its outer (enclosing) scope, even after that outer scope has finished executing. Closures are a fundamental concept in JavaScript and enable powerful patterns like data privacy and currying.</p>
+            <pre><code class="language-javascript">// Basic Closure
+function createCounter() {
+    let count = 0; // This variable is "closed over"
+
+    return function() {
+        count++;
+        return count;
+    };
+}
+
+const counter1 = createCounter();
+console.log(counter1()); // 1
+console.log(counter1()); // 2
+
+const counter2 = createCounter(); // Creates a new, independent closure
+console.log(counter2()); // 1
+
+// Practical Use: Private State (Module Pattern)
+const bankAccount = (function() {
+    let balance = 1000; // Private variable
+
+    function changeBalance(amount) {
+        balance += amount;
+    }
+
+    return {
+        deposit: function(amount) {
+            if (amount > 0) {
+                changeBalance(amount);
+            }
+            return `Deposited ${amount}. New balance: ${balance}`;
+        },
+        withdraw: function(amount) {
+            if (amount > 0 && amount <= balance) {
+                changeBalance(-amount);
+            }
+            return `Withdrew ${amount}. New balance: ${balance}`;
+        },
+        getBalance: function() {
+            return `Current balance: ${balance}`;
+        }
+    };
+})();
+
+console.log(bankAccount.getBalance()); // "Current balance: 1000"
+console.log(bankAccount.deposit(500)); // "Deposited 500. New balance: 1500"
+// console.log(bankAccount.balance); // undefined - cannot access private variable
+</code></pre>
+
+            <h2 class="title is-3">6. Higher-Order Functions</h2>
+            <p>A higher-order function is a function that either takes one or more functions as arguments, or returns a function as its result. This is a cornerstone of functional programming in JavaScript.</p>
+            <pre><code class="language-javascript">// Function that takes a function as an argument (e.g., .map)
+const numbers = [1, 2, 3, 4];
+const doubled = numbers.map(n => n * 2); // .map is a higher-order function
+console.log(doubled); // [2, 4, 6, 8]
+
+function applyOperation(x, y, operation) {
+    return operation(x, y);
+}
+console.log(applyOperation(10, 5, (a, b) => a - b)); // 5
+
+// Function that returns a function (Currying)
+function createMultiplier(factor) {
+    return function(number) {
+        return number * factor;
+    };
+}
+
+const double = createMultiplier(2);
+const triple = createMultiplier(3);
+
+console.log(double(10)); // 20
+console.log(triple(10)); // 30
+</code></pre>
+
+            <h2 class="title is-3">7. Function Methods: <code>call</code>, <code>apply</code>, <code>bind</code></h2>
+            <p>These methods are built into all functions and allow you to explicitly set the <code>this</code> context of a function and control how its arguments are passed.</p>
+            <pre><code class="language-javascript">const user = {
+    name: "Frank"
+};
+
+function introduce(greeting, punctuation) {
+    console.log(`${greeting}, I'm ${this.name}${punctuation}`);
+}
+
+// .call(): Invokes the function with a specific 'this' context and arguments passed individually.
+introduce.call(user, "Hi", "!"); // "Hi, I'm Frank!"
+
+// .apply(): Similar to .call(), but arguments are passed as an array.
+introduce.apply(user, ["Hello", "."]); // "Hello, I'm Frank."
+
+// .bind(): Returns a new function with the 'this' context and initial arguments "bound" to it.
+const greetFrank = introduce.bind(user, "Hey there");
+greetFrank("?"); // "Hey there, I'm Frank?"
+</code></pre>
+
+            <h2 class="title is-3">8. Asynchronous Functions (Async/Await)</h2>
+            <p><code>async</code> functions, introduced in ES2017, provide a much cleaner and more readable syntax for working with Promises. An <code>async</code> function always returns a Promise, and the <code>await</code> keyword can be used inside it to pause execution until a Promise settles.</p>
+            <pre><code class="language-javascript">// An async function always returns a Promise.
+async function fetchUserData(userId) {
+    try {
+        const response = await fetch(`https://api.example.com/users/${userId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const user = await response.json();
+        return user;
+    } catch (error) {
+        console.error("Could not fetch user:", error);
+        return null; // Or re-throw the error
+    }
+}
+
+// Using the async function
+fetchUserData(1).then(user => {
+    if (user) {
+        console.log(user.name);
+    }
+});
+
+// Parallel execution with Promise.all
+async function fetchDashboardData() {
+    const [user, posts, comments] = await Promise.all([
+        fetchUserData(1),
+        fetch('/api/posts'),
+        fetch('/api/comments')
+    ]);
+    console.log(`User: ${user.name}, Posts: ${posts.length}`);
+}
+</code></pre>
+
+            <h2 class="title is-3">9. Generator Functions</h2>
+            <p>Generator functions (<code>function*</code>) are a special type of function that can be paused and resumed, allowing for the creation of custom iterators and managing complex, stateful asynchronous flows in a more linear fashion.</p>
+            <pre><code class="language-javascript">// A generator function can 'yield' multiple values.
+function* idGenerator() {
+    let id = 1;
+    while (true) {
+        yield id++;
+    }
+}
+
+const gen = idGenerator();
+console.log(gen.next().value); // 1
+console.log(gen.next().value); // 2
+console.log(gen.next().value); // 3
+</code></pre>
+
+            <h2 class="title is-3">10. Best Practices</h2>
+            <div class="notification is-info">
+                <ul>
+                    <li><strong>Keep Functions Small:</strong> Follow the single-responsibility principle. A function should do one thing and do it well.</li>
+                    <li><strong>Use Pure Functions When Possible:</strong> Prefer functions that have no side effects and return the same output for the same input. This makes them easier to test and reason about.</li>
+                    <li><strong>Use Arrow Functions for Callbacks:</strong> They provide cleaner syntax and lexical <code>this</code> binding, which avoids many common bugs.</li>
+                    <li><strong>Use Descriptive Names:</strong> Function names should be verbs that clearly indicate what they do (e.g., `calculateTotal`, `fetchUserData`).</li>
+                    <li><strong>Use <code>async/await</code> for Asynchronous Code:</strong> It's more readable and maintainable than long Promise chains or callbacks.</li>
+                    <li><strong>Destructure Parameters:</strong> For functions that accept an object with multiple properties, destructuring the parameters makes the function signature clearer.</li>
+                    <li><strong>Avoid Global Scope:</strong> Use modules (ES6 modules) or IIFEs (Immediately Invoked Function Expressions) to encapsulate code and prevent polluting the global namespace.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

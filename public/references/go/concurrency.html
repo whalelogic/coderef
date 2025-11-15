@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Go Concurrency - Goroutines & Channels</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <section class="section">
+        <h1 class="title">Go Concurrency: Goroutines & Channels</h1>
+        <div class="content">
+          <p class="subtitle">
+            Master concurrent programming in Go with goroutines, channels, and
+            synchronization patterns.
+          </p>
+
+          <h2 class="title is-4">1. Goroutines Fundamentals</h2>
+          <p>
+            Goroutines are lightweight threads managed by the Go runtime. They
+            enable concurrent execution with minimal overhead—you can spawn
+            thousands or even millions of goroutines.
+          </p>
+
+          <h3 class="title is-5">Basic Goroutine Creation</h3>
+          <pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func sayHello(name string) {
+    for i := 0; i < 3; i++ {
+        fmt.Printf("Hello, %s! (iteration %d)\n", name, i)
+        time.Sleep(100 * time.Millisecond)
+    }
+}
+
+func main() {
+    // Launch goroutine with go keyword
+    go sayHello("Alice")
+    go sayHello("Bob")
+    
+    // Main goroutine continues executing
+    sayHello("Main")
+    
+    // Wait for goroutines to finish (simple approach)
+    time.Sleep(400 * time.Millisecond)
+}</code></pre>
+
+          <h3 class="title is-5">Anonymous Goroutines</h3>
+          <pre><code class="language-go">func main() {
+    // Launch anonymous function as goroutine
+    go func() {
+        fmt.Println("Anonymous goroutine executing")
+    }()
+    
+    // Goroutine with parameters (careful with closures!)
+    name := "Charlie"
+    go func(n string) {
+        fmt.Printf("Hello, %s!\n", n)
+    }(name)  // Pass variable explicitly
+    
+    // WRONG: Closure captures variable reference
+    for i := 0; i < 3; i++ {
+        go func() {
+            fmt.Println(i)  // May print unexpected values!
+        }()
+    }
+    
+    // CORRECT: Pass loop variable explicitly
+    for i := 0; i < 3; i++ {
+        go func(val int) {
+            fmt.Println(val)  // Prints 0, 1, 2 reliably
+        }(i)
+    }
+    
+    time.Sleep(100 * time.Millisecond)
+}</code></pre>
+
+          <h2 class="title is-4">
+            2. Channels: Communication Between Goroutines
+          </h2>
+          <p>
+            Channels are typed conduits for sending and receiving values between
+            goroutines. They provide synchronization and safe data sharing
+            without explicit locks.
+          </p>
+
+          <h3 class="title is-5">Creating and Using Channels</h3>
+          <pre><code class="language-go">package main
+
+import "fmt"
+
+func main() {
+    // Create unbuffered channel
+    ch := make(chan int)
+    
+    // Send and receive (blocks until both ready)
+    go func() {
+        ch <- 42  // Send value to channel
+    }()
+    
+    value := <-ch  // Receive value from channel
+    fmt.Println(value)  // Output: 42
+    
+    // Buffered channel (holds 3 values)
+    buffered := make(chan string, 3)
+    buffered <- "one"
+    buffered <- "two"
+    buffered <- "three"
+    // buffered <- "four"  // Would block until space available
+    
+    fmt.Println(<-buffered)  // one
+    fmt.Println(<-buffered)  // two
+    fmt.Println(<-buffered)  // three
+}</code></pre>
+
+          <h3 class="title is-5">Channel Directions</h3>
+          <pre><code class="language-go">// Send-only channel
+func sender(ch chan<- int) {
+    ch <- 100
+    // value := <-ch  // Compile error: cannot receive from send-only channel
+}
+
+// Receive-only channel
+func receiver(ch <-chan int) {
+    value := <-ch
+    fmt.Println(value)
+    // ch <- 200  // Compile error: cannot send to receive-only channel
+}
+
+func main() {
+    ch := make(chan int)
+    go sender(ch)
+    receiver(ch)
+}</code></pre>
+
+          <h3 class="title is-5">Closing Channels</h3>
+          <pre><code class="language-go">func producer(ch chan<- int) {
+    for i := 0; i < 5; i++ {
+        ch <- i
+    }
+    close(ch)  // Signal no more values
+}
+
+func main() {
+    ch := make(chan int)
+    go producer(ch)
+    
+    // Method 1: Range over channel (stops when closed)
+    for value := range ch {
+        fmt.Println(value)
+    }
+    
+    // Method 2: Check if channel is closed
+    ch2 := make(chan int)
+    go producer(ch2)
+    
+    for {
+        value, ok := <-ch2
+        if !ok {
+            fmt.Println("Channel closed")
+            break
+        }
+        fmt.Println(value)
+    }
+}</code></pre>
+
+          <h2 class="title is-4">3. Select Statement</h2>
+          <p>
+            The <code>select</code> statement lets a goroutine wait on multiple
+            channel operations, choosing whichever is ready first.
+          </p>
+
+          <h3 class="title is-5">Basic Select</h3>
+          <pre><code class="language-go">func main() {
+    ch1 := make(chan string)
+    ch2 := make(chan string)
+    
+    go func() {
+        time.Sleep(100 * time.Millisecond)
+        ch1 <- "from ch1"
+    }()
+    
+    go func() {
+        time.Sleep(50 * time.Millisecond)
+        ch2 <- "from ch2"
+    }()
+    
+    // Wait for first available channel
+    select {
+    case msg1 := <-ch1:
+        fmt.Println(msg1)
+    case msg2 := <-ch2:
+        fmt.Println(msg2)  // This executes (faster)
+    }
+}</code></pre>
+
+          <h3 class="title is-5">Select with Default (Non-blocking)</h3>
+          <pre><code class="language-go">func main() {
+    ch := make(chan int)
+    
+    select {
+    case value := <-ch:
+        fmt.Println("Received:", value)
+    default:
+        fmt.Println("No data available")  // Executes immediately
+    }
+    
+    // Non-blocking send
+    select {
+    case ch <- 42:
+        fmt.Println("Sent value")
+    default:
+        fmt.Println("Channel not ready")  // Executes (no receiver)
+    }
+}</code></pre>
+
+          <h3 class="title is-5">Timeout Pattern</h3>
+          <pre><code class="language-go">import "time"
+
+func main() {
+    ch := make(chan string)
+    
+    go func() {
+        time.Sleep(2 * time.Second)
+        ch <- "result"
+    }()
+    
+    select {
+    case result := <-ch:
+        fmt.Println("Got:", result)
+    case <-time.After(1 * time.Second):
+        fmt.Println("Timeout!")  // Executes after 1 second
+    }
+}</code></pre>
+
+          <h2 class="title is-4">4. Worker Pool Pattern</h2>
+          <pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func worker(id int, jobs <-chan int, results chan<- int) {
+    for job := range jobs {
+        fmt.Printf("Worker %d processing job %d\n", id, job)
+        time.Sleep(100 * time.Millisecond)  // Simulate work
+        results <- job * 2
+    }
+}
+
+func main() {
+    const numJobs = 10
+    const numWorkers = 3
+    
+    jobs := make(chan int, numJobs)
+    results := make(chan int, numJobs)
+    
+    // Start worker pool
+    for w := 1; w <= numWorkers; w++ {
+        go worker(w, jobs, results)
+    }
+    
+    // Send jobs
+    for j := 1; j <= numJobs; j++ {
+        jobs <- j
+    }
+    close(jobs)
+    
+    // Collect results
+    for r := 1; r <= numJobs; r++ {
+        result := <-results
+        fmt.Printf("Result: %d\n", result)
+    }
+}</code></pre>
+
+          <h2 class="title is-4">5. WaitGroups for Synchronization</h2>
+          <pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+func worker(id int, wg *sync.WaitGroup) {
+    defer wg.Done()  // Decrement counter when done
+    
+    fmt.Printf("Worker %d starting\n", id)
+    time.Sleep(time.Second)
+    fmt.Printf("Worker %d done\n", id)
+}
+
+func main() {
+    var wg sync.WaitGroup
+    
+    for i := 1; i <= 5; i++ {
+        wg.Add(1)  // Increment counter
+        go worker(i, &wg)
+    }
+    
+    wg.Wait()  // Block until counter is zero
+    fmt.Println("All workers completed")
+}</code></pre>
+
+          <h2 class="title is-4">6. Mutexes for Shared State</h2>
+          <pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+type SafeCounter struct {
+    mu    sync.Mutex
+    value int
+}
+
+func (c *SafeCounter) Increment() {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    c.value++
+}
+
+func (c *SafeCounter) Value() int {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    return c.value
+}
+
+func main() {
+    counter := SafeCounter{}
+    var wg sync.WaitGroup
+    
+    // Spawn 1000 goroutines
+    for i := 0; i < 1000; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            counter.Increment()
+        }()
+    }
+    
+    wg.Wait()
+    fmt.Println("Final count:", counter.Value())  // Always 1000
+}</code></pre>
+
+          <h3 class="title is-5">RWMutex for Read-Heavy Workloads</h3>
+          <pre><code class="language-go">type Cache struct {
+    mu   sync.RWMutex
+    data map[string]string
+}
+
+func (c *Cache) Get(key string) (string, bool) {
+    c.mu.RLock()  // Multiple readers allowed
+    defer c.mu.RUnlock()
+    value, ok := c.data[key]
+    return value, ok
+}
+
+func (c *Cache) Set(key, value string) {
+    c.mu.Lock()  // Exclusive write access
+    defer c.mu.Unlock()
+    c.data[key] = value
+}</code></pre>
+
+          <h2 class="title is-4">7. Context for Cancellation</h2>
+          <pre><code class="language-go">package main
+
+import (
+    "context"
+    "fmt"
+    "time"
+)
+
+func worker(ctx context.Context, id int) {
+    for {
+        select {
+        case <-ctx.Done():
+            fmt.Printf("Worker %d cancelled: %v\n", id, ctx.Err())
+            return
+        default:
+            fmt.Printf("Worker %d working...\n", id)
+            time.Sleep(500 * time.Millisecond)
+        }
+    }
+}
+
+func main() {
+    // Context with timeout
+    ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+    defer cancel()
+    
+    for i := 1; i <= 3; i++ {
+        go worker(ctx, i)
+    }
+    
+    time.Sleep(3 * time.Second)
+    fmt.Println("Main done")
+}</code></pre>
+
+          <h3 class="title is-5">Context with Values</h3>
+          <pre><code class="language-go">type key string
+
+func main() {
+    ctx := context.WithValue(context.Background(), key("userID"), "12345")
+    
+    go func(ctx context.Context) {
+        if userID, ok := ctx.Value(key("userID")).(string); ok {
+            fmt.Println("User ID:", userID)
+        }
+    }(ctx)
+    
+    time.Sleep(100 * time.Millisecond)
+}</code></pre>
+
+          <h2 class="title is-4">8. Pipeline Pattern</h2>
+          <pre><code class="language-go">func generator(nums ...int) <-chan int {
+    out := make(chan int)
+    go func() {
+        for _, n := range nums {
+            out <- n
+        }
+        close(out)
+    }()
+    return out
+}
+
+func square(in <-chan int) <-chan int {
+    out := make(chan int)
+    go func() {
+        for n := range in {
+            out <- n * n
+        }
+        close(out)
+    }()
+    return out
+}
+
+func main() {
+    // Pipeline: generate -> square
+    nums := generator(2, 3, 4, 5)
+    squares := square(nums)
+    
+    for result := range squares {
+        fmt.Println(result)  // 4, 9, 16, 25
+    }
+}</code></pre>
+
+          <h2 class="title is-4">9. Fan-Out, Fan-In Pattern</h2>
+          <pre><code class="language-go">func merge(channels ...<-chan int) <-chan int {
+    var wg sync.WaitGroup
+    out := make(chan int)
+    
+    // Fan-in: merge multiple channels into one
+    output := func(ch <-chan int) {
+        defer wg.Done()
+        for n := range ch {
+            out <- n
+        }
+    }
+    
+    wg.Add(len(channels))
+    for _, ch := range channels {
+        go output(ch)
+    }
+    
+    // Close output channel when all inputs are done
+    go func() {
+        wg.Wait()
+        close(out)
+    }()
+    
+    return out
+}
+
+func main() {
+    in := generator(1, 2, 3, 4, 5, 6)
+    
+    // Fan-out: distribute work to multiple workers
+    c1 := square(in)
+    c2 := square(in)
+    c3 := square(in)
+    
+    // Fan-in: merge results
+    for result := range merge(c1, c2, c3) {
+        fmt.Println(result)
+    }
+}</code></pre>
+
+          <h2 class="title is-4">10. Common Pitfalls</h2>
+
+          <h3 class="title is-5">Deadlock</h3>
+          <pre><code class="language-go">// WRONG: Deadlock - unbuffered channel blocks
+func main() {
+    ch := make(chan int)
+    ch <- 42  // Blocks forever (no receiver)
+    fmt.Println(<-ch)
+}
+
+// FIX 1: Use goroutine
+func main() {
+    ch := make(chan int)
+    go func() {
+        ch <- 42
+    }()
+    fmt.Println(<-ch)
+}
+
+// FIX 2: Use buffered channel
+func main() {
+    ch := make(chan int, 1)
+    ch <- 42  // Doesn't block (buffer has space)
+    fmt.Println(<-ch)
+}</code></pre>
+
+          <h3 class="title is-5">Goroutine Leaks</h3>
+          <pre><code class="language-go">// WRONG: Goroutine never exits
+func leak() <-chan int {
+    ch := make(chan int)
+    go func() {
+        val := compute()  // Long computation
+        ch <- val  // Blocks forever if no receiver
+    }()
+    return ch
+}
+
+// FIX: Use buffered channel or context cancellation
+func fixed(ctx context.Context) <-chan int {
+    ch := make(chan int, 1)  // Buffered
+    go func() {
+        select {
+        case <-ctx.Done():
+            return  // Exit on cancellation
+        case ch <- compute():
+        }
+    }()
+    return ch
+}</code></pre>
+
+          <h2 class="title is-4">11. Best Practices</h2>
+          <ul>
+            <li>
+              <strong
+                >Don't communicate by sharing memory; share memory by
+                communicating</strong
+              >
+              - Use channels over mutexes when possible
+            </li>
+            <li>
+              <strong>Channel ownership</strong> - The goroutine that creates a
+              channel should close it
+            </li>
+            <li>
+              <strong>Buffered vs unbuffered</strong> - Use unbuffered for
+              synchronization, buffered for performance
+            </li>
+            <li>
+              <strong>Context for cancellation</strong> - Always propagate
+              context through call chains
+            </li>
+            <li>
+              <strong>Avoid goroutine leaks</strong> - Ensure every goroutine
+              has a way to terminate
+            </li>
+            <li>
+              <strong>Use WaitGroups for counting</strong> - Better than
+              time.Sleep for synchronization
+            </li>
+            <li>
+              <strong>Race detector</strong> - Run tests with
+              <code>go test -race</code>
+            </li>
+            <li>
+              <strong>Limit goroutines</strong> - Use worker pools instead of
+              spawning unlimited goroutines
+            </li>
+          </ul>
+
+          <h2 class="title is-4">
+            12. Real-World Example: HTTP Request Aggregator
+          </h2>
+          <pre><code class="language-go">package main
+
+import (
+    "context"
+    "fmt"
+    "net/http"
+    "sync"
+    "time"
+)
+
+type Result struct {
+    URL      string
+    Status   int
+    Duration time.Duration
+    Error    error
+}
+
+func fetch(ctx context.Context, url string) Result {
+    start := time.Now()
+    req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
+    
+    resp, err := http.DefaultClient.Do(req)
+    duration := time.Since(start)
+    
+    if err != nil {
+        return Result{URL: url, Error: err, Duration: duration}
+    }
+    defer resp.Body.Close()
+    
+    return Result{
+        URL:      url,
+        Status:   resp.StatusCode,
+        Duration: duration,
+    }
+}
+
+func fetchAll(urls []string, timeout time.Duration) []Result {
+    ctx, cancel := context.WithTimeout(context.Background(), timeout)
+    defer cancel()
+    
+    results := make(chan Result, len(urls))
+    var wg sync.WaitGroup
+    
+    // Fan-out: fetch URLs concurrently
+    for _, url := range urls {
+        wg.Add(1)
+        go func(u string) {
+            defer wg.Done()
+            results <- fetch(ctx, u)
+        }(url)
+    }
+    
+    // Close results channel when done
+    go func() {
+        wg.Wait()
+        close(results)
+    }()
+    
+    // Collect results
+    var allResults []Result
+    for result := range results {
+        allResults = append(allResults, result)
+    }
+    
+    return allResults
+}
+
+func main() {
+    urls := []string{
+        "https://golang.org",
+        "https://github.com",
+        "https://stackoverflow.com",
+    }
+    
+    results := fetchAll(urls, 5*time.Second)
+    
+    for _, r := range results {
+        if r.Error != nil {
+            fmt.Printf("%s: ERROR %v\n", r.URL, r.Error)
+        } else {
+            fmt.Printf("%s: %d (%v)\n", r.URL, r.Status, r.Duration)
+        }
+    }
+}</code></pre>
+        </div>
+      </section>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  </body>
+</html>

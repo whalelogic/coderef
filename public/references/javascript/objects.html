@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Objects</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">JavaScript Objects</h1>
+            <p class="subtitle">An in-depth guide to object creation, properties, methods, prototypes, classes, and modern object-oriented patterns in JavaScript.</p>
+
+            <p>Objects are the most fundamental building blocks in JavaScript. An object is a collection of key-value pairs, where keys are strings (or Symbols) and values can be anything: strings, numbers, booleans, arrays, or even other objects and functions. Understanding objects is essential for mastering JavaScript.</p>
+
+            <h2 class="title is-3">1. Creating Objects</h2>
+            <p>There are several ways to create objects in JavaScript, each with its own use case.</p>
+            
+            <h3 class="title is-4">Object Literal</h3>
+            <p>This is the simplest and most common way to create an object. It's concise and readable, making it ideal for most situations.</p>
+            <pre><code class="language-javascript">// Object literal
+const person = {
+    name: "Alice",
+    age: 30,
+    greet() { // ES6 method shorthand
+        return `Hello, I'm ${this.name}`;
+    }
+};
+console.log(person.greet()); // "Hello, I'm Alice"
+</code></pre>
+
+            <h3 class="title is-4">Constructor Functions</h3>
+            <p>Before ES6 classes, constructor functions were the standard way to create objects of the same type, simulating a "class" structure. The <code>new</code> keyword creates a new object, sets <code>this</code> to that object, and returns it.</p>
+            <pre><code class="language-javascript">// Constructor function
+function Person(name, age) {
+    this.name = name;
+    this.age = age;
+}
+const alice = new Person("Alice", 30);
+console.log(alice.name); // "Alice"
+</code></pre>
+
+            <h3 class="title is-4">ES6 Classes</h3>
+            <p>ES6 introduced the <code>class</code> keyword, which provides a cleaner and more modern syntax for creating objects and handling inheritance. It is "syntactic sugar" over JavaScript's existing prototype-based inheritance.</p>
+            <pre><code class="language-javascript">// ES6 Class
+class User {
+    constructor(name) {
+        this.name = name;
+    }
+    greet() {
+        return `Hi, I'm ${this.name}`;
+    }
+}
+const user = new User("Bob");
+console.log(user.greet()); // "Hi, I'm Bob"
+</code></pre>
+
+            <h2 class="title is-3">2. Property Access & Manipulation</h2>
+            <p>You can access, add, or modify object properties using dot notation or bracket notation.</p>
+            <pre><code class="language-javascript">const obj = { name: "Alice", age: 30 };
+
+// Dot notation (for valid identifiers)
+console.log(obj.name); // "Alice"
+
+// Bracket notation (for dynamic keys or invalid identifiers)
+console.log(obj["age"]); // 30
+const key = "name";
+console.log(obj[key]); // "Alice"
+
+// Adding properties
+obj.city = "NYC";
+obj["country"] = "USA";
+
+// Deleting properties
+delete obj.age;
+
+// Checking for property existence
+console.log("name" in obj);        // true
+console.log(obj.hasOwnProperty("name")); // true
+</code></pre>
+            <div class="notification is-info">
+                <strong>Best Practice:</strong> Use dot notation whenever possible as it is more readable. Use bracket notation when the property name is stored in a variable or is not a valid identifier (e.g., contains spaces or special characters).
+            </div>
+
+            <h2 class="title is-3">3. Object Methods and `this`</h2>
+            <p>Methods are functions stored as object properties. The <code>this</code> keyword inside a method refers to the object the method is called on. However, arrow functions behave differently, inheriting <code>this</code> from the parent scope.</p>
+            <pre><code class="language-javascript">const person = {
+    name: "Alice",
+    age: 30,
+    
+    // Method shorthand (correct 'this' binding)
+    greet() {
+        return `Hello, I'm ${this.name}`;
+    },
+    
+    // Arrow function (incorrect 'this' binding for methods)
+    getName: () => this.name // 'this' will be the global object, not 'person'
+};
+
+console.log(person.greet()); // "Hello, I'm Alice"
+console.log(person.getName()); // undefined
+</code></pre>
+
+            <h3 class="title is-4">Getters and Setters</h3>
+            <p>Getters and setters allow you to define custom behavior for reading and writing properties.</p>
+            <pre><code class="language-javascript">const user = {
+    firstName: "John",
+    lastName: "Doe",
+    
+    get fullName() {
+        return `${this.firstName} ${this.lastName}`;
+    },
+    
+    set fullName(value) {
+        [this.firstName, this.lastName] = value.split(" ");
+    }
+};
+console.log(user.fullName);    // "John Doe"
+user.fullName = "Jane Smith";  // Calls the setter
+console.log(user.firstName);   // "Jane"
+</code></pre>
+
+            <h2 class="title is-3">4. Object Iteration</h2>
+            <p>There are several ways to loop over an object's properties.</p>
+            <pre><code class="language-javascript">const person = { name: "Alice", age: 30, city: "NYC" };
+
+// for...in loop (iterates over all enumerable properties, including inherited ones)
+for (let key in person) {
+    if (person.hasOwnProperty(key)) { // Good practice to check for own properties
+        console.log(key, person[key]);
+    }
+}
+
+// Object.keys() (returns an array of own property keys)
+Object.keys(person).forEach(key => {
+    console.log(key, person[key]);
+});
+
+// Object.values() (returns an array of own property values)
+Object.values(person).forEach(value => {
+    console.log(value);
+});
+
+// Object.entries() (returns an array of [key, value] pairs for own properties)
+Object.entries(person).forEach(([key, value]) => {
+    console.log(`${key}: ${value}`);
+});
+</code></pre>
+
+            <h2 class="title is-3">5. Object Copying & Merging</h2>
+            <p>Copying objects correctly is crucial to avoid unintended side effects.</p>
+            
+            <h3 class="title is-4">Shallow Copy</h3>
+            <p>A shallow copy creates a new object, but if the original object contains other objects, only the references to those objects are copied.</p>
+            <pre><code class="language-javascript">const original = { a: 1, b: { c: 2 } };
+
+// Shallow copy with spread syntax (...)
+const copy = { ...original };
+copy.a = 100; // Does not affect original
+copy.b.c = 99; // This MUTATES the original object!
+
+console.log(original.b.c); // 99
+</code></pre>
+
+            <h3 class="title is-4">Deep Copy</h3>
+            <p>A deep copy creates a new object and recursively copies all nested objects, so there are no shared references.</p>
+            <pre><code class="language-javascript">const original = { a: 1, b: { c: 2 } };
+
+// The modern, recommended way for deep copying
+const deepCopy = structuredClone(original);
+deepCopy.b.c = 99; // Does not affect original
+
+console.log(original.b.c); // 2
+
+// A common but limited older method
+const deepCopyJSON = JSON.parse(JSON.stringify(original));
+</code></pre>
+            <div class="notification is-warning">
+                <strong>Key Insight:</strong> The <code>structuredClone()</code> global function is the modern and robust way to create deep copies of objects. It can handle complex data types that <code>JSON.parse(JSON.stringify())</code> cannot, such as Dates, RegExps, and Maps.
+            </div>
+
+            <h2 class="title is-3">6. Object Destructuring (ES6)</h2>
+            <p>Destructuring provides a convenient way to extract properties from objects and bind them to variables.</p>
+            <pre><code class="language-javascript">const person = { name: "Alice", age: 30, city: "NYC" };
+
+// Basic destructuring
+const { name, age } = person;
+console.log(name); // "Alice"
+
+// Renaming variables
+const { name: personName } = person;
+console.log(personName); // "Alice"
+
+// Default values
+const { country = "USA" } = person;
+console.log(country); // "USA"
+
+// Rest properties
+const { name: n, ...rest } = person;
+console.log(rest); // { age: 30, city: "NYC" }
+
+// Function parameter destructuring
+function greet({ name, age }) {
+    return `Hello ${name}, you are ${age}`;
+}
+console.log(greet(person)); // "Hello Alice, you are 30"
+</code></pre>
+
+            <h2 class="title is-3">7. Prototypes & Inheritance</h2>
+            <p>JavaScript uses a prototype-based inheritance model. Every object has a private property which holds a link to another object called its <strong>prototype</strong>. That prototype object has a prototype of its own, and so on, until an object is reached with <code>null</code> as its prototype. This is known as the prototype chain.</p>
+            <pre><code class="language-javascript">// ES6 Class inheritance provides a cleaner syntax for this
+class Animal {
+    constructor(name) {
+        this.name = name;
+    }
+    speak() {
+        return `${this.name} makes a sound`;
+    }
+}
+
+class Dog extends Animal {
+    speak() {
+        // super.speak() could be used to call the parent method
+        return `${this.name} barks`;
+    }
+}
+
+const buddy = new Dog("Buddy");
+console.log(buddy.speak()); // "Buddy barks"
+console.log(buddy instanceof Dog);    // true
+console.log(buddy instanceof Animal); // true
+</code></pre>
+
+            <h2 class="title is-3">8. Modern Object Patterns</h2>
+            
+            <h3 class="title is-4">Optional Chaining (<code>?.</code>)</h3>
+            <p>Safely access nested properties without having to write long chains of checks for null or undefined values.</p>
+            <pre><code class="language-javascript">const user = { profile: { name: "Alice" } };
+console.log(user?.profile?.name);      // "Alice"
+console.log(user?.address?.city);      // undefined (no error is thrown)
+</code></pre>
+
+            <h3 class="title is-4">Nullish Coalescing (<code>??</code>)</h3>
+            <p>Provides a default value for a variable that is <code>null</code> or <code>undefined</code>, without falling back on falsy values like <code>0</code>, <code>false</code>, or an empty string <code>""</code>.</p>
+            <pre><code class="language-javascript">const config = { timeout: 0 };
+// The '||' operator would incorrectly use 5000 because 0 is falsy
+const timeoutWithOr = config.timeout || 5000; // 5000
+// The '??' operator correctly uses 0
+const timeoutWithCoalesce = config.timeout ?? 5000; // 0
+</code></pre>
+
+            <h2 class="title is-3">9. Best Practices</h2>
+            <div class="notification is-info">
+                <ul>
+                    <li><strong>Use <code>const</code> for objects</strong> to prevent accidental reassignment of the object reference.</li>
+                    <li><strong>Use object literals and classes</strong> for creating objects, as they are the most readable and standard approaches.</li>
+                    <li><strong>Use destructuring</strong> to make your code more concise and readable, especially when working with large objects or function parameters.</li>
+                    <li><strong>Use the spread syntax (<code>...</code>) for shallow copies</strong> and merging, and <strong><code>structuredClone()</code> for deep copies</strong>.</li>
+                    <li><strong>Leverage optional chaining (<code>?.</code>) and nullish coalescing (<code>??</code>)</strong> to write safer and more concise code.</li>
+                    <li><strong>Keep objects focused</strong> on a single responsibility to improve modularity and maintainability.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

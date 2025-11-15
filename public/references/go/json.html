@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON in Go</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+    />
+    <link rel="stylesheet" href="/static/css/prism-overrides.css" />
+  </head>
+  <body>
+    <div class="container">
+      <section class="section">
+        <div class="content">
+          <h1 class="title">JSON in Go</h1>
+
+          <p>
+            Go provides excellent support for JSON encoding and decoding through the
+            `encoding/json` package. JSON is commonly used for APIs, configuration
+            files, and data interchange.
+          </p>
+
+          <h2 class="subtitle">Marshaling (Encoding)</h2>
+          <p>Convert Go data structures to JSON:</p>
+          <pre><code class="language-go">package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "log"
+)
+
+type Person struct {
+    Name    string   `json:"name"`
+    Age     int      `json:"age"`
+    Email   string   `json:"email,omitempty"`
+    Hobbies []string `json:"hobbies"`
+}
+
+func main() {
+    person := Person{
+        Name:    "Alice",
+        Age:     30,
+        Hobbies: []string{"reading", "hiking"},
+    }
+
+    // Marshal to JSON
+    jsonData, err := json.Marshal(person)
+    if (err != nil) {
+        log.Fatal(err)
+    }
+    fmt.Println(string(jsonData))
+    // {"name":"Alice","age":30,"hobbies":["reading","hiking"]}
+
+    // Marshal with indentation (pretty print)
+    prettyJSON, err := json.MarshalIndent(person, "", "  ")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println(string(prettyJSON))
+}</code></pre>
+
+          <h2 class="subtitle">Unmarshaling (Decoding)</h2>
+          <p>Parse JSON into Go structs:</p>
+          <pre><code class="language-go">func main() {
+    jsonString := `{
+        "name": "Bob",
+        "age": 25,
+        "email": "bob@example.com",
+        "hobbies": ["gaming", "coding"]
+    }`
+
+    var person Person
+    err := json.Unmarshal([]byte(jsonString), &person)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Name: %s, Age: %d\n", person.Name, person.Age)
+    fmt.Printf("Hobbies: %v\n", person.Hobbies)
+}</code></pre>
+
+          <h2 class="subtitle">Struct Tags</h2>
+          <p>Control JSON field names and behavior with struct tags:</p>
+          <pre><code class="language-go">type User struct {
+    ID        int    `json:"id"`                    // Field name: id
+    Name      string `json:"name"`                  // Field name: name
+    Password  string `json:"-"`                     // Never include in JSON
+    Email     string `json:"email,omitempty"`       // Omit if empty
+    CreatedAt string `json:"created_at,omitempty"`  // Snake case with omitempty
+}
+
+// Common tag options:
+// json:"name"           - Set field name
+// json:"-"              - Ignore field
+// json:",omitempty"     - Omit if zero value
+// json:"name,string"    - Force string encoding</code></pre>
+
+          <h2 class="subtitle">Working with Maps</h2>
+          <p>Handle dynamic JSON with maps:</p>
+          <pre><code class="language-go">func main() {
+    // Unmarshal into map[string]interface{}
+    jsonStr := `{"name":"Charlie","age":35,"active":true}`
+    
+    var data map[string]interface{}
+    json.Unmarshal([]byte(jsonStr), &data)
+    
+    // Access with type assertions
+    name := data["name"].(string)
+    age := data["age"].(float64)  // JSON numbers are float64
+    active := data["active"].(bool)
+    
+    fmt.Printf("%s is %v years old, active: %v\n", name, int(age), active)
+
+    // Marshal map to JSON
+    newData := map[string]interface{}{
+        "city":    "New York",
+        "country": "USA",
+        "population": 8000000,
+    }
+    
+    jsonBytes, _ := json.Marshal(newData)
+    fmt.Println(string(jsonBytes))
+}</code></pre>
+
+          <h2 class="subtitle">JSON Streams</h2>
+          <p>Encode/decode JSON streams efficiently:</p>
+          <pre><code class="language-go">import (
+    "encoding/json"
+    "os"
+)
+
+func writeJSONFile() {
+    people := []Person{
+        {Name: "Alice", Age: 30},
+        {Name: "Bob", Age: 25},
+    }
+
+    file, _ := os.Create("people.json")
+    defer file.Close()
+
+    encoder := json.NewEncoder(file)
+    encoder.SetIndent("", "  ")
+    encoder.Encode(people)
+}
+
+func readJSONFile() {
+    file, _ := os.Open("people.json")
+    defer file.Close()
+
+    var people []Person
+    decoder := json.NewDecoder(file)
+    decoder.Decode(&people)
+
+    fmt.Printf("Read %d people\n", len(people))
+}</code></pre>
+
+          <h2 class="subtitle">Custom JSON Marshaling</h2>
+          <p>Implement custom encoding/decoding:</p>
+          <pre><code class="language-go">import "time"
+
+type Event struct {
+    Name string
+    Time time.Time
+}
+
+// Custom MarshalJSON
+func (e Event) MarshalJSON() ([]byte, error) {
+    type Alias Event
+    return json.Marshal(&struct {
+        Time string `json:"time"`
+        *Alias
+    }{
+        Time:  e.Time.Format(time.RFC3339),
+        Alias: (*Alias)(&e),
+    })
+}
+
+// Custom UnmarshalJSON
+func (e *Event) UnmarshalJSON(data []byte) error {
+    type Alias Event
+    aux := &struct {
+        Time string `json:"time"`
+        *Alias
+    }{
+        Alias: (*Alias)(e),
+    }
+    
+    if err := json.Unmarshal(data, &aux); err != nil {
+        return err
+    }
+    
+    t, err := time.Parse(time.RFC3339, aux.Time)
+    if err != nil {
+        return err
+    }
+    e.Time = t
+    return nil
+}</code></pre>
+
+          <h2 class="subtitle">Error Handling</h2>
+          <p>Handle JSON errors gracefully:</p>
+          <pre><code class="language-go">func parseJSON(jsonStr string) error {
+    var data map[string]interface{}
+    
+    if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
+        // Handle syntax errors
+        if syntaxErr, ok := err.(*json.SyntaxError); ok {
+            return fmt.Errorf("JSON syntax error at byte %d", syntaxErr.Offset)
+        }
+        // Handle type errors
+        if typeErr, ok := err.(*json.UnmarshalTypeError); ok {
+            return fmt.Errorf("cannot unmarshal %s into Go value of type %s", 
+                typeErr.Value, typeErr.Type)
+        }
+        return err
+    }
+    
+    return nil
+}</code></pre>
+        </div>
+      </section>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  </body>
+</html>

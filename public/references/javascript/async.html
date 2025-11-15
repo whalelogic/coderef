@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Async/Await</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="../../static/css/prism-overrides.css">
+</head>
+<body>
+<div class="container">
+    <section class="section">
+        <div class="content">
+            <h1 class="title">JavaScript Async/Await</h1>
+            <p class="subtitle">Master modern asynchronous JavaScript with async functions, the await keyword, error handling, and powerful patterns.</p>
+            <p><code>async/await</code> is a modern feature in JavaScript, introduced in ES2017, that provides "syntactic sugar" on top of Promises. It allows you to write asynchronous code that looks and behaves like synchronous code, making it much easier to read, write, and debug.</p>
+
+            <h2 class="title is-3">1. Async Function Basics</h2>
+            <p>An <code>async</code> function is declared with the <code>async</code> keyword. It always returns a <code>Promise</code>. If the function returns a value, the Promise resolves with that value. If it throws an error, the Promise is rejected.</p>
+            <pre><code class="language-javascript">// This async function automatically returns a Promise that resolves to "Hello".
+async function fetchData() {
+    return "Hello";
+}
+
+fetchData().then(data => console.log(data)); // "Hello"
+
+// The `await` keyword pauses the function execution until the Promise settles.
+// It can only be used inside an async function.
+async function getData() {
+    console.log("Waiting for the promise to resolve...");
+    const data = await fetchData(); // `await` unwraps the resolved value from the Promise.
+    console.log(data); // "Hello"
+    return data;
+}
+getData();
+</code></pre>
+
+            <h2 class="title is-3">2. Error Handling with `try...catch`</h2>
+            <p>A major advantage of <code>async/await</code> is the ability to use standard synchronous error handling constructs: <code>try...catch...finally</code>.</p>
+            <pre><code class="language-javascript">// You can catch errors from `await` expressions just like regular `throw` statements.
+async function fetchUser(id) {
+    try {
+        const response = await fetch(`https://api.example.com/users/${id}`);
+        if (!response.ok) {
+            throw new Error("User not found"); // This error will be caught by the catch block.
+        }
+        const user = await response.json();
+        return user;
+    } catch (error) {
+        console.error("Error fetching user:", error.message);
+        return null; // Gracefully handle the error by returning null.
+    } finally {
+        console.log("Fetch attempt finished."); // This block runs regardless of success or failure.
+    }
+}
+
+// If you don't use try/catch, the returned promise will be rejected.
+async function riskyFunction() {
+    // If this fetch fails, it will result in an unhandled promise rejection if not caught at the call site.
+    const data = await fetch("https://invalid-url.example.com");
+    return data.json();
+}
+
+// You must catch the error when calling the function.
+riskyFunction().catch(error => console.error("Caught risky function error:", error.message));
+</code></pre>
+
+            <h2 class="title is-3">3. Sequential vs. Parallel Execution</h2>
+            <p>Managing the flow of asynchronous operations is critical for performance.</p>
+
+            <h3 class="title is-4">Sequential Execution</h3>
+            <p>When you <code>await</code> promises one after another, they execute in sequence. This is necessary if one operation depends on the result of the previous one, but it can be slow if the operations are independent.</p>
+            <pre><code class="language-javascript">// Sequential (slow): Each operation waits for the previous one to complete.
+async function fetchSequential() {
+    console.time("sequential");
+    const user = await fetchUser(1);      // Takes ~1s
+    const posts = await fetchPosts(user.id);    // Depends on user, so must be sequential. Takes ~1s
+    const comments = await fetchComments(posts[0].id); // Depends on posts. Takes ~1s
+    console.timeEnd("sequential"); // Total time: ~3 seconds
+    return { user, posts, comments };
+}
+</code></pre>
+
+            <h3 class="title is-4">Parallel Execution</h3>
+            <p>For independent operations, running them in parallel with <code>Promise.all()</code> is much more efficient.</p>
+            <pre><code class="language-javascript">// Parallel (fast): All promises are initiated at once.
+async function fetchParallel() {
+    console.time("parallel");
+    const [user, posts, comments] = await Promise.all([
+        fetchUser(1),       // Independent
+        fetchPosts(1),      // Independent
+        fetchComments(1)    // Independent
+    ]);
+    console.timeEnd("parallel"); // Total time: ~1 second (the duration of the longest promise)
+    return { user, posts, comments };
+}
+
+// A common optimization is to start promises early and await them later.
+async function fetchOptimized() {
+    const userPromise = fetchUser(1);  // Starts immediately
+    const postsPromise = fetchPosts(1); // Starts immediately
+    
+    // You can perform other synchronous work here while waiting...
+    const settings = loadSettings();
+    
+    // Now, await the results.
+    const user = await userPromise;
+    const posts = await postsPromise;
+    
+    return { user, posts, settings };
+}
+</code></pre>
+
+            <h2 class="title is-3">4. Looping with Async/Await</h2>
+            <p>Using <code>await</code> inside loops requires choosing the right kind of loop for the job.</p>
+            
+            <h3 class="title is-4">Sequential Loop: `for...of`</h3>
+            <p>This is the standard way to perform sequential asynchronous operations on a collection.</p>
+            <pre><code class="language-javascript">// The loop pauses at each `await`, ensuring one operation finishes before the next begins.
+async function processUsers(ids) {
+    for (const id of ids) {
+        const user = await fetchUser(id);
+        await saveUser(user);
+        console.log(`Processed user ${id}`);
+    }
+}
+</code></pre>
+
+            <h3 class="title is-4">Parallel Loop: `map` + `Promise.all`</h3>
+            <p>To run operations for all items in parallel, map the items to an array of promises and use <code>Promise.all</code>.</p>
+            <pre><code class="language-javascript">async function processUsersParallel(ids) {
+    const userPromises = ids.map(id => fetchUser(id));
+    const users = await Promise.all(userPromises);
+    // At this point, all users have been fetched.
+    users.forEach(user => console.log(`Fetched ${user.name}`));
+}
+</code></pre>
+            <div class="notification is-danger">
+                <strong>Common Pitfall:</strong> Avoid using <code>forEach</code> with <code>await</code>. The <code>forEach</code> method does not wait for the promises to resolve, leading to a "fire-and-forget" scenario where the loop finishes before the async operations do.
+            </div>
+
+            <h2 class="title is-3">5. Advanced Patterns & Real-World Examples</h2>
+            
+            <h3 class="title is-4">Retry with Exponential Backoff</h3>
+            <p>This pattern is useful for handling transient network errors by retrying a failed operation with increasing delays.</p>
+            <pre><code class="language-javascript">async function fetchWithRetry(url, retries = 3, delay = 1000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await fetch(url);
+            if (response.ok) return response;
+            throw new Error(`HTTP Error: ${response.status}`);
+        } catch (error) {
+            if (i === retries - 1) throw error; // Rethrow last error
+            console.log(`Attempt ${i + 1} failed. Retrying in ${delay * (i + 1)}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+        }
+    }
+}
+</code></pre>
+
+            <h3 class="title is-4">Form Submission</h3>
+            <p><code>async/await</code> makes handling UI state during asynchronous operations clean and simple.</p>
+            <pre><code class="language-javascript">async function handleSubmit(formData) {
+    const submitButton = document.querySelector("#submit");
+    submitButton.disabled = true;
+    
+    try {
+        const response = await fetch("/api/submit", {
+            method: "POST",
+            body: JSON.stringify(formData)
+        });
+        if (!response.ok) throw new Error(`Submission failed: ${response.statusText}`);
+        const result = await response.json();
+        showSuccess("Submitted successfully!");
+        return result;
+    } catch (error) {
+        showError(error.message);
+    } finally {
+        // This ensures the button is re-enabled even if an error occurs.
+        submitButton.disabled = false;
+    }
+}
+</code></pre>
+
+            <h3 class="title is-4">Top-Level Await (ES2022)</h3>
+            <p>In ES Modules, you can now use <code>await</code> at the top level, outside of an <code>async</code> function. This is useful for loading configuration or dependencies before the rest of the module executes.</p>
+            <pre><code class="language-javascript">// config.js
+// The execution of this module will pause until the config is fetched.
+const response = await fetch("/api/config");
+export const config = await response.json();
+
+// main.js
+// This import will not resolve until config.js has finished its top-level await.
+import { config } from "./config.js";
+console.log("App running with config:", config);
+</code></pre>
+
+            <h2 class="title is-3">6. Best Practices & Common Mistakes</h2>
+            <div class="notification is-info">
+                <ul>
+                    <li><strong>Always handle errors:</strong> Use <code>try/catch</code> in async functions or add a <code>.catch()</code> when calling them.</li>
+                    <li><strong>Parallelize for performance:</strong> Use <code>Promise.all()</code> for independent async operations.</li>
+                    <li><strong>Choose the right loop:</strong> Use <code>for...of</code> for sequential async tasks and <code>map</code> + <code>Promise.all</code> for parallel ones. Avoid <code>forEach</code>.</li>
+                    <li><strong>Don't forget <code>await</code>:</strong> A common mistake is calling an async function without <code>await</code> and expecting the unwrapped value. This gives you a Promise object instead.</li>
+                </ul>
+            </div>
+            <pre><code class="language-javascript">// ❌ MISTAKE: Forgetting await
+async function getPostTitle() {
+    const post = fetchPost(1); // This is a Promise, not the post object!
+    return post.title; // Throws an error: Cannot read properties of undefined
+}
+
+// ✅ CORRECT: Using await
+async function getPostTitleFixed() {
+    const post = await fetchPost(1); // Awaits the promise, gets the post object
+    return post.title;
+}
+
+// ❌ MISTAKE: Sequential when parallel is possible
+async function getSlowData() {
+    const user = await fetchUser(1); // waits
+    const posts = await fetchPosts(1); // waits again
+    return { user, posts };
+}
+
+// ✅ CORRECT: Parallel execution
+async function getFastData() {
+    const [user, posts] = await Promise.all([fetchUser(1), fetchPosts(1)]);
+    return { user, posts };
+}
+</code></pre>
+        </div>
+    </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>
