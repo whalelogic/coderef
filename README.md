@@ -64,6 +64,11 @@ python3 -m http.server 8000
 - **Frontend**: HTML, CSS (Bulma), JavaScript
 - **Backend**: Go (static file server)
 - **Fonts**: Google Fonts (Roboto, Lato)
+- **Syntax Highlighting**: Prism.js
+- **Icons**: Devicon
+- **Search**: Simple JavaScript filtering
+- **Deployment**: Static hosting compatible
+
 
 ## Branding
 
