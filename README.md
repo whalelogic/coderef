@@ -65,7 +65,7 @@ python3 -m http.server 8000
 - **Backend**: Go (static file server)
 - **Fonts**: Google Fonts (Roboto, Lato)
 - **Syntax Highlighting**: Prism.js
-- **Icons**: Devicon
+- **Icons**: Devicon, Font Awesome and Icons8
 - **Search**: Simple JavaScript filtering
 - **Deployment**: Static hosting compatible
 
