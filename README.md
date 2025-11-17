@@ -10,6 +10,12 @@ A clean, interactive code reference website for multiple programming languages.
 - 📱 Mobile-friendly interface
 - ⚡ Fast static file serving with Go
 
+
+## Clean and Extensible UI
+<img alt="image" src="https://github.com/user-attachments/assets/010ab6b5-e5fb-4f4e-a5ba-9a3ce274e054" />
+
+
+
 ## Running the Server
 
 ### Using Go (Recommended)
