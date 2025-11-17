@@ -56,7 +56,10 @@ python3 -m http.server 8000
 │   ├── references/         # Language reference files
 │   │   ├── go/
 │   │   ├── python/
-│   │   └── javascript/
+│   │   |── javascript/
+|   |   ├── typescript/
+|   |   ├── rust/
+|   |   ├── ruby/
 │   └── static/
 │       ├── css/
 │       │   └── style.css   # Custom styles
@@ -78,7 +81,7 @@ python3 -m http.server 8000
 
 ## Branding
 
-The CodeRef logo is an anchor icon, representing stability and a deep-rooted foundation in knowledge. The icon is sourced from [Icons8](https://icons8.com).
+The CodeRef logo is an referee icon, representing rules and regulations, which when followed, provide a critical foundation for learning programming and attainment of qualitive knowledge. The icon is sourced from [Icons8](https://icons8.com).
 
 ## License
 
