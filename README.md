@@ -10,6 +10,12 @@ A clean, interactive code reference website for multiple programming languages.
 - 📱 Mobile-friendly interface
 - ⚡ Fast static file serving with Go
 
+
+## Clean and Extensible UI
+<img alt="image" src="https://github.com/user-attachments/assets/010ab6b5-e5fb-4f4e-a5ba-9a3ce274e054" />
+
+
+
 ## Running the Server
 
 ### Using Go (Recommended)
@@ -50,7 +56,10 @@ python3 -m http.server 8000
 │   ├── references/         # Language reference files
 │   │   ├── go/
 │   │   ├── python/
-│   │   └── javascript/
+│   │   |── javascript/
+|   |   ├── typescript/
+|   |   ├── rust/
+|   |   ├── ruby/
 │   └── static/
 │       ├── css/
 │       │   └── style.css   # Custom styles
@@ -72,7 +81,7 @@ python3 -m http.server 8000
 
 ## Branding
 
-The CodeRef logo is an anchor icon, representing stability and a deep-rooted foundation in knowledge. The icon is sourced from [Icons8](https://icons8.com).
+The CodeRef logo is an referee icon, representing rules and regulations, which when followed, provide a critical foundation for learning programming and attainment of qualitive knowledge. The icon is sourced from [Icons8](https://icons8.com).
 
 ## License
 
