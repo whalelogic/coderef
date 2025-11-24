@@ -81,7 +81,7 @@ python3 -m http.server 8000
 
 ## Branding
 
-The CodeRef logo is an referee icon, representing rules and regulations, which when followed, provide a critical foundation for learning programming and knowledge. The icon is sourced from [Icons8](https://icons8.com).
+The CodeRef logo is an referee icon, representing rules and regulations, which when followed, provide a critical foundation for learning programming. The icon is sourced from [Icons8](https://icons8.com).
 
 <img width="1200" height="830" alt="image" src="https://github.com/user-attachments/assets/57292531-ecc0-4d56-a5bf-181982321a29" />
 
