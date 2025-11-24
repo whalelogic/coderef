@@ -345,9 +345,17 @@ document.addEventListener("DOMContentLoaded", () => {
   function showWelcome() {
     breadcrumbNav.innerHTML = "";
     let html = '<div class="content">';
-    html += '<h2 class="title">Welcome to CodeRef</h2>';
+    html += '<h2 class="title">Get Started</h2>';
     html +=
-      '<p class="subtitle">Select a language from the menu to explore</p>';
+      '<p class="subtitle">Select a language from the menu to explore code examples and references</p>';
+    html += '<div class="columns is-multiline">';
+    html += '<div class="column is-6"><div class="box language-preview"><strong>Go</strong> - Variables, Functions, Structs, Interfaces, Concurrency, Error Handling</div></div>';
+    html += '<div class="column is-6"><div class="box language-preview"><strong>Python</strong> - Data Types, Functions, Classes, Modules, Exceptions, Context Managers</div></div>';
+    html += '<div class="column is-6"><div class="box language-preview"><strong>JavaScript</strong> - Variables, Functions, Objects, Arrays, Promises, Async/Await</div></div>';
+    html += '<div class="column is-6"><div class="box language-preview"><strong>TypeScript</strong> - Types, Interfaces, Generics</div></div>';
+    html += '<div class="column is-6"><div class="box language-preview"><strong>Rust</strong> - Ownership, Borrowing, Structs</div></div>';
+    html += '<div class="column is-6"><div class="box language-preview"><strong>Ruby</strong> - Blocks & Procs, Classes, Symbols</div></div>';
+    html += '</div>';
     html += "</div>";
     referenceContent.innerHTML = html;
   }
