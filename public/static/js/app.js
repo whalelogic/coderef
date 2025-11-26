@@ -69,6 +69,11 @@ document.addEventListener("DOMContentLoaded", () => {
               url: "references/go/errors.html",
               icon: "fa-exclamation-circle",
             },
+            {
+              title: "Idioms",
+              url: "references/go/idioms.html",
+              icon: "fa-lightbulb",
+            },
           ],
         },
         {
@@ -322,6 +327,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const submenu = document.createElement("ul");
       submenu.className = "submenu";
 
+      const basicLi = document.createElement("li");
+      const basicLink = document.createElement("a");
+      basicLink.href = "#";
+      basicLink.dataset.lang = langKey;
+      basicLink.dataset.isBasic = "true";
+      basicLink.innerHTML = `<i class="fas fa-book"></i> Basic`;
+      basicLi.appendChild(basicLink);
+      submenu.appendChild(basicLi);
+
       langData.categories.forEach((category, catIndex) => {
         category.topics.forEach((topic, topicIndex) => {
           const topicLi = document.createElement("li");
@@ -349,14 +363,59 @@ document.addEventListener("DOMContentLoaded", () => {
     html +=
       '<p class="subtitle">Select a language from the menu to explore code examples and references</p>';
     html += '<div class="columns is-multiline">';
-    html += '<div class="column is-6"><div class="box language-preview"><strong>Go</strong> - Variables, Functions, Structs, Interfaces, Concurrency, Error Handling</div></div>';
-    html += '<div class="column is-6"><div class="box language-preview"><strong>Python</strong> - Data Types, Functions, Classes, Modules, Exceptions, Context Managers</div></div>';
-    html += '<div class="column is-6"><div class="box language-preview"><strong>JavaScript</strong> - Variables, Functions, Objects, Arrays, Promises, Async/Await</div></div>';
-    html += '<div class="column is-6"><div class="box language-preview"><strong>TypeScript</strong> - Types, Interfaces, Generics</div></div>';
-    html += '<div class="column is-6"><div class="box language-preview"><strong>Rust</strong> - Ownership, Borrowing, Structs</div></div>';
-    html += '<div class="column is-6"><div class="box language-preview"><strong>Ruby</strong> - Blocks & Procs, Classes, Symbols</div></div>';
-    html += '</div>';
-    html += "</div>";
+
+    Object.keys(references).forEach((langKey) => {
+      const langData = references[langKey];
+      html += '<div class="column is-6">';
+      html += `<div class="box language-preview-box" data-lang="${langKey}">`;
+      html += `<strong>${langData.title}</strong> - `;
+      
+      const topics = [];
+      langData.categories.forEach((category, catIndex) => {
+        category.topics.forEach((topic, topicIndex) => {
+          topics.push(
+            `<a href="#" class="topic-link" data-lang="${langKey}" data-category-index="${catIndex}" data-topic-index="${topicIndex}">${topic.title}</a>`
+          );
+        });
+      });
+
+      html += topics.join(", ");
+      html += "</div></div>";
+    });
+
+    html += "</div></div>";
+    referenceContent.innerHTML = html;
+  }
+
+  function displayCategory(lang) {
+    currentLang = lang;
+    currentCategoryIndex = -1;
+    currentTopicIndex = -1;
+
+    const langData = references[lang];
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    breadcrumbNav.innerHTML = `
+      <ul>
+        <li><a href="#" class="breadcrumb-home">${langData.title}</a></li>
+        <li class="is-active"><a href="#">Basic</a></li>
+      </ul>
+    `;
+
+    let html = `<div class="content">`;
+    html += `<h2 class="title">${langData.title} Basic</h2>`;
+    html += `<div class="columns is-multiline">`;
+
+    langData.categories.forEach((category, catIndex) => {
+      category.topics.forEach((topic, topicIndex) => {
+        html += `<div class="column is-6">`;
+        html += `<a href="#" class="box topic-link" data-lang="${lang}" data-category-index="${catIndex}" data-topic-index="${topicIndex}">`;
+        html += `<i class="fas ${topic.icon}"></i> ${topic.title}`;
+        html += `</a></div>`;
+      });
+    });
+
+    html += `</div></div>`;
     referenceContent.innerHTML = html;
   }
 
@@ -376,7 +435,7 @@ document.addEventListener("DOMContentLoaded", () => {
     breadcrumbNav.innerHTML = `
       <ul>
         <li><a href="#" class="breadcrumb-home">${langData.title}</a></li>
-        <li><a href="#">${category.name}</a></li>
+        <li><a href="#" class="breadcrumb-category" data-lang="${lang}">${category.name}</a></li>
         <li class="is-active"><a href="#">${topic.title}</a></li>
       </ul>
     `;
@@ -390,6 +449,7 @@ document.addEventListener("DOMContentLoaded", () => {
         referenceContent.innerHTML =
           html +
           '<div class="navigation-buttons"><button class="button" id="back-btn"><i class="fas fa-arrow-left"></i> Back</button></div>';
+        Prism.highlightAll();
       })
       .catch((err) => {
         referenceContent.innerHTML = `<div class="notification is-danger">Error: ${err}</div>`;
@@ -405,8 +465,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const lang = link.dataset.lang;
     const catIndex = link.dataset.categoryIndex;
     const topicIndex = link.dataset.topicIndex;
+    const isBasic = link.dataset.isBasic;
 
-    if (catIndex !== undefined && topicIndex !== undefined) {
+    if (isBasic) {
+      displayCategory(lang);
+      languageMenu
+        .querySelectorAll("a")
+        .forEach((a) => a.classList.remove("is-active"));
+      link.classList.add("is-active");
+    } else if (catIndex !== undefined && topicIndex !== undefined) {
       // Topic clicked
       displayTopic(lang, parseInt(catIndex), parseInt(topicIndex));
 
@@ -443,6 +510,33 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.closest("#back-btn")) {
       showWelcome();
     }
+
+    const langPreview = e.target.closest(".language-preview-box");
+    const langIconLink = e.target.closest(".language-icon-link");
+    const topicLink = e.target.closest(".topic-link");
+
+    if (topicLink) {
+      e.preventDefault();
+      e.stopPropagation();
+      const lang = topicLink.dataset.lang;
+      const catIndex = topicLink.dataset.categoryIndex;
+      const topicIndex = topicLink.dataset.topicIndex;
+      displayTopic(lang, parseInt(catIndex), parseInt(topicIndex));
+    } else if (langPreview) {
+      e.preventDefault();
+      const lang = langPreview.dataset.lang;
+      const langLink = languageMenu.querySelector(`a[data-lang="${lang}"]`);
+      if (langLink) {
+        langLink.click();
+      }
+    } else if (langIconLink) {
+      e.preventDefault();
+      const lang = langIconLink.dataset.lang;
+      const langLink = languageMenu.querySelector(`a[data-lang="${lang}"]`);
+      if (langLink) {
+        langLink.click();
+      }
+    }
   });
 
   // Event: Breadcrumb clicks
@@ -450,6 +544,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.classList.contains("breadcrumb-home")) {
       e.preventDefault();
       showWelcome();
+    } else if (e.target.classList.contains("breadcrumb-category")) {
+      e.preventDefault();
+      const lang = e.target.dataset.lang;
+      displayCategory(lang);
     }
   });
 

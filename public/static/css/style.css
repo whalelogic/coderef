@@ -97,6 +97,10 @@ body {
   color: white !important;
 }
 
+.menu-list .submenu {
+  display: none;
+}
+
 .menu-list .submenu a {
   padding-left: 2rem;
   font-size: 0.9rem;
@@ -116,6 +120,19 @@ body {
 .box {
   background-color: white;
   box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+}
+
+.language-preview-box {
+  transition: all 0.2s ease-in-out;
+}
+
+.language-preview-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+}
+
+.about-section {
+  background-color: #f5faff;
 }
 
 @media (prefers-color-scheme: dark) {

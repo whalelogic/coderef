@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Advanced Go Engineering — Deep Dives</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
+    <style>
+      .table-container {
+        overflow: auto;
+      }
+      pre.code {
+        white-space: pre-wrap;
+        font-family: monospace;
+      }
+      .toc {
+        position: sticky;
+        top: 1rem;
+      }
+      .tag.is-tech {
+        background: #00d1b2;
+        color: #fff;
+      }
+      .section-title {
+        margin-top: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="section">
+      <div class="container">
+        <h1 class="title">Advanced Go Idioms and Patterns</h1>
+        <p class="subtitle">
+          A brief, straight-foward guide and cheatsheet to advanced Go
+          programming techniques and idioms.
+        </p>
+
+        <div class="columns">
+          <div class="column is-one-quarter">
+            <aside class="menu toc box">
+              <p class="menu-label">Contents</p>
+              <ul class="menu-list">
+                <li><a href="#core-table">Core Idioms Table</a></li>
+                <li>
+                  <a href="#concurrency">Concurrency Patterns (Deep Dive)</a>
+                </li>
+                <li>
+                  <a href="#system">System Programming & Process Control</a>
+                </li>
+                <li>
+                  <a href="#meta"
+                    >Reflection, Metaprogramming & Code Generation</a
+                  >
+                </li>
+                <li><a href="#perf">Performance-critical Go</a></li>
+                <li><a href="#downloads">Downloads</a></li>
+              </ul>
+            </aside>
+          </div>
+
+          <div class="column">
+            <section id="core-table" class="box">
+              <h2 class="title is-4">Core Idioms Table</h2>
+              <div class="table-container">
+                <table class="table is-striped is-hoverable is-fullwidth">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Idiom / Technique</th>
+                      <th>Why It Matters</th>
+                      <th>Example</th>
+                      <th>Notes / Gotchas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Formatting & Inspection</td>
+                      <td><code>%#v</code> Go-syntax dump</td>
+                      <td>Produce copy-pasteable Go structs for debugging</td>
+                      <td><code>fmt.Printf(\"%#v\\n\", cmd)</code></td>
+                      <td>
+                        Only prints exported fields; unexported require
+                        reflection
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Formatting & Inspection</td>
+                      <td><code>%T</code> on interfaces</td>
+                      <td>Reveals concrete runtime type</td>
+                      <td><code>fmt.Printf(\"%T\\n\", x)</code></td>
+                      <td>Critical when debugging interface pollution</td>
+                    </tr>
+                    <tr>
+                      <td>Error Handling</td>
+                      <td><code>errors.Join</code></td>
+                      <td>Aggregate multiple errors without losing context</td>
+                      <td><code>return errors.Join(err1, err2)</code></td>
+                      <td>Excellent for cleanup paths</td>
+                    </tr>
+                    <tr>
+                      <td>Context Usage</td>
+                      <td>Context first argument</td>
+                      <td>Idiomatic API design</td>
+                      <td><code>func Fetch(ctx context.Context, ...)</code></td>
+                      <td>Signals cancellation semantics</td>
+                    </tr>
+                    <tr>
+                      <td>Exec & Processes</td>
+                      <td>
+                        Use <code>Cmd.Env = append(os.Environ(), ...)</code>
+                      </td>
+                      <td>Proper environment override</td>
+                      <td>
+                        <code>Cmd.Env = append(os.Environ(), \"A=1\")</code>
+                      </td>
+                      <td>Never replace env entirely unless required</td>
+                    </tr>
+                    <tr>
+                      <td>Concurrency</td>
+                      <td>Never use goroutines without context</td>
+                      <td>Avoid leaked goroutines</td>
+                      <td><code>go worker(ctx, jobs)</code></td>
+                      <td>Memory leaks in Go are goroutine leaks</td>
+                    </tr>
+                    <tr>
+                      <td>Performance</td>
+                      <td>Use <code>strings.Builder</code></td>
+                      <td>Efficient string concatenation</td>
+                      <td><code>var b strings.Builder</code></td>
+                      <td>Builder is fastest for text</td>
+                    </tr>
+                    <tr>
+                      <td>Networking</td>
+                      <td>Reuse <code>http.Client</code></td>
+                      <td>Keep connection pools warm</td>
+                      <td>Do not create client per request</td>
+                      <td>Vital for performance</td>
+                    </tr>
+                    <tr>
+                      <td>Tooling</td>
+                      <td><code>go test -race</code></td>
+                      <td>Detect data races</td>
+                      <td>run tests with race</td>
+                      <td>Slightly slower but gold standard</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section id="concurrency" class="box section-title">
+              <h2 class="title is-4">Concurrency Patterns — Deep Dive</h2>
+              <p class="content">
+                Advanced, production-proven patterns focusing on lifecycle,
+                backpressure, observability, and failure modes.
+              </p>
+              <div class="table-container">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                  <thead>
+                    <tr>
+                      <th>Pattern</th>
+                      <th>What It Solves</th>
+                      <th>Canonical Example</th>
+                      <th>Notes / Production Tips</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Structured concurrency (errgroup + context)</td>
+                      <td>
+                        Tie goroutines to a parent scope and propagate errors
+                        and cancellation
+                      </td>
+                      <td>
+                        <pre class="code">
+g, ctx := errgroup.WithContext(ctx)\ng.Go(func(){ return work(ctx) })\nif err := g.Wait(); err != nil { ... }</pre
+                        >
+                      </td>
+                      <td>
+                        Use for request-scoped or job-scoped operations; ensures
+                        no leaked workers. Prefer errgroup for simple fan-out
+                        with error handling.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Bounded work queue + backpressure</td>
+                      <td>
+                        Prevent uncontrolled memory growth when producers are
+                        faster than consumers
+                      </td>
+                      <td>
+                        <pre class="code">
+jobs := make(chan Job, N)\nfor i:=0;i<workers;i++{ go worker(jobs) }\nselect {\n case jobs<-job: // enqueue\n case <-ctx.Done(): // drop or return\n}</pre
+                        >
+                      </td>
+                      <td>
+                        Expose queue depth metrics; use circuit-breakers when
+                        queue consistently full.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Semaphore pattern</td>
+                      <td>
+                        Limit concurrency for ad-hoc critical sections without
+                        full pool
+                      </td>
+                      <td>
+                        <pre class="code">
+sem := make(chan struct{}, N)\nacquire := func(){ sem<-struct{}{} }\nrelease := func(){ <-sem }</pre
+                        >
+                      </td>
+                      <td>
+                        Combine with context-aware select to avoid deadlocks on
+                        shutdown.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Pipeline stages with bounded parallelism</td>
+                      <td>
+                        Composable ETL with per-stage concurrency and
+                        flow-control
+                      </td>
+                      <td>
+                        <pre class="code">
+in := make(chan A)\nstage := func(in<-chan A, out chan<-B){\n for v := range in { out<-process(v) }\n close(out)\n}\n</pre
+                        >
+                      </td>
+                      <td>
+                        Be explicit about who closes channels; use WaitGroup for
+                        graceful shutdown when stages share workers.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Retry with exponential backoff + jitter</td>
+                      <td>Robust retries while avoiding thundering herd</td>
+                      <td>
+                        <pre class="code">
+for i:=0;i<max;i++{\n  sleep := backoff(i) + jitter()\n  time.Sleep(sleep)\n  if do() == nil { break }\n}\n</pre
+                        >
+                      </td>
+                      <td>
+                        Prefer \"full jitter\" (random between 0 and cap) or
+                        decorrelated jitter. Cap maximum backoff and consider
+                        circuit breaker integration.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Fan-out/fan-in with ordered aggregation</td>
+                      <td>
+                        Parallelize CPU-bound tasks while preserving input order
+                      </td>
+                      <td>
+                        <pre class="code">
+type res struct{ idx int; val T; err error }\nout := make(chan res)\nfor i,v := range inputs{ i,v:=i,v; go func(){ out<-process(i,v) }() }\nresults := make([]T, len(inputs))\nfor range inputs{ r := <-out; results[r.idx]=r.val }\n</pre
+                        >
+                      </td>
+                      <td>
+                        Use sequence numbers to restore order. Buffer results to
+                        avoid blocking workers on slow downstream consumers.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        Cooperative cancellation inside long-running CPU loops
+                      </td>
+                      <td>Allow long tasks to be preempted cleanly</td>
+                      <td>
+                        <pre class="code">
+for i:=0;i<n;i++{\n  if i%1024==0 { select{ case <-ctx.Done(): return ctx.Err() default: } }\n  workChunk(i)\n}\n</pre
+                        >
+                      </td>
+                      <td>
+                        Chunk CPU work and check ctx periodically. Fine-grained
+                        cancellation points balance responsiveness vs overhead.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Graceful shutdown: drain then close</td>
+                      <td>
+                        Complete inflight work while rejecting new requests
+                      </td>
+                      <td>
+                        <pre class="code">
+draining := true\n// stop accepting new\nclose(acceptCh)\n// wait for inflight to finish via WaitGroup\nwg.Wait()\n</pre
+                        >
+                      </td>
+                      <td>
+                        Expose health endpoint that reports \"draining\" state.
+                        Use readiness probes in orchestrators.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Leader election (distributed)</td>
+                      <td>
+                        Ensure a single instance performs background tasks
+                      </td>
+                      <td>
+                        <pre class="code">
+lock := NewEtcdLock(\"job-name\")\nif lock.TryLock(ctx) { runLeaderTasks(ctx) }\n</pre
+                        >
+                      </td>
+                      <td>
+                        Use TTL-based leases and renewals. Handle split-brain by
+                        ensuring work is idempotent or uses external
+                        coordination.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Bulkhead isolation</td>
+                      <td>Limit blast radius of failing downstreams</td>
+                      <td>
+                        <pre class="code">
+semaphores per downstream; queues per downstream</pre
+                        >
+                      </td>
+                      <td>
+                        Combine with circuit breakers and capacity shedding for
+                        robust resilience.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section id="system" class="box section-title">
+              <h2 class="title is-4">
+                System Programming & Process Control — Deep Dive
+              </h2>
+              <p>
+                Advanced OS and process controls used in tooling, sandboxes, and
+                platform daemons.
+              </p>
+
+              <div class="table-container">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                  <thead>
+                    <tr>
+                      <th>Technique</th>
+                      <th>Why It Matters</th>
+                      <th>Canonical Example</th>
+                      <th>Notes / Gotchas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Process groups and job control</td>
+                      <td>Terminate whole process trees reliably</td>
+                      <td>
+                        <pre class="code">
+cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}\n// kill - signal to -pid to target group\nsyscall.Kill(-pid, syscall.SIGTERM)\n</pre
+                        >
+                      </td>
+                      <td>
+                        Unix-only; be careful with PID sign semantics. Use in
+                        supervisors to clean children.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>PTY for interactive children</td>
+                      <td>Run TUI apps and capture full terminal I/O</td>
+                      <td>
+                        <pre class="code">
+f, err := pty.Start(cmd)\nio.Copy(os.Stdout, f)\n</pre
+                        >
+                      </td>
+                      <td>
+                        Handle terminal resize and raw mode. Be careful with
+                        codecs and line discipline.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>ExtraFiles for fd passing</td>
+                      <td>
+                        Handshake file descriptors between parent and child
+                        (e.g., sockets)
+                      </td>
+                      <td>
+                        <pre class="code">
+cmd.ExtraFiles = []*os.File{listenerFile}\n</pre
+                        >
+                      </td>
+                      <td>
+                        Child receives fds starting at fd 3; document protocol
+                        and order.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Credential switching</td>
+                      <td>Run subprocesses with least privilege</td>
+                      <td>
+                        <pre class="code">
+cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uid, Gid: gid}\n</pre
+                        >
+                      </td>
+                      <td>
+                        Requires privilege to lower or set credentials. Use in
+                        daemons spawning user jobs.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Signal forwarding and orchestrated shutdown</td>
+                      <td>
+                        Make process behave correctly in containers and init
+                        systems
+                      </td>
+                      <td>
+                        <pre class="code">
+sigc := make(chan os.Signal,1)\nsignal.Notify(sigc, syscall.SIGTERM)\n<-sigc\ncancel()\n</pre
+                        >
+                      </td>
+                      <td>
+                        Don't forward SIGKILL. Ensure children are reaped (Wait)
+                        or use subreaper.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Reaping & subreapers</td>
+                      <td>
+                        Prevent zombie accumulation in nested container
+                        environments
+                      </td>
+                      <td>
+                        <pre class="code">
+prctl(PR_SET_CHILD_SUBREAPER, 1)\n</pre
+                        >
+                      </td>
+                      <td>
+                        Use x/sys/unix and test in containerized setups.
+                        Kernel-dependent behavior.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Namespace isolation (unshare)</td>
+                      <td>Lightweight sandboxing for builds/tests</td>
+                      <td>
+                        <pre class="code">
+syscall.Unshare(syscall.CLONE_NEWNS | ...)\n</pre
+                        >
+                      </td>
+                      <td>
+                        Requires privileges; mounts and capabilities must be
+                        handled carefully.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Files descriptor lifetimes & Close-on-exec</td>
+                      <td>Avoid leaking fds into child processes</td>
+                      <td>
+                        <pre class="code">
+fd.Fd(); syscall.CloseOnExec(fdint)</pre
+                        >
+                      </td>
+                      <td>
+                        Use O_CLOEXEC where possible and check third-party
+                        libraries leaking fds.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        High-performance logging to file without allocations
+                      </td>
+                      <td>Reduce GC pressure in logging hot-paths</td>
+                      <td>
+                        <pre class="code">
+use mmaped buffers or preallocated ring buffers and background flusher</pre
+                        >
+                      </td>
+                      <td>
+                        Complex; prefer well-tested libraries unless you need
+                        extreme throughput.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section id="meta" class="box section-title">
+              <h2 class="title is-4">
+                Reflection, Metaprogramming & Code Generation — Deep Dive
+              </h2>
+              <p>
+                Techniques for large-codebase automation, generation, and
+                tooling.
+              </p>
+              <div class="table-container">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                  <thead>
+                    <tr>
+                      <th>Technique</th>
+                      <th>Why It Matters</th>
+                      <th>Example</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>AST transforms (go/ast + go/parser)</td>
+                      <td>
+                        Automate code changes reliably preserving semantics
+                      </td>
+                      <td>
+                        <pre class="code">
+fset := token.NewFileSet()\nnode, _ := parser.ParseFile(fset, path, nil, parser.ParseComments)\nast.Inspect(node, func(n ast.Node) bool{ ... })\n</pre
+                        >
+                      </td>
+                      <td>
+                        Preserve comments and formatting with go/printer or
+                        go/format. Make transforms idempotent.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>go/analysis for custom linters</td>
+                      <td>Enforce team invariants at compile/CI time</td>
+                      <td>
+                        <pre class="code">
+analysis.Analyzer{ Name: \"nofoo\", Run: func(pass *analysis.Pass) (interface{}, error){ ... } }\n</pre
+                        >
+                      </td>
+                      <td>
+                        Integrate with golangci-lint; avoid expensive analyzers
+                        in pre-commit hooks.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>go:generate + templates</td>
+                      <td>Generate repetitive code from small templates</td>
+                      <td>
+                        <pre class="code">//go:generate go run ./cmd/gen\n</pre>
+                      </td>
+                      <td>
+                        Keep generators idempotent and fast. Check generated
+                        output into VCS if stable.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Zero-allocation codecs via reflect + unsafe</td>
+                      <td>Extreme performance for serialization</td>
+                      <td>
+                        <pre class="code">
+use field offsets and write to []byte directly</pre
+                        >
+                      </td>
+                      <td>
+                        Brittle across versions and architectures; maintain
+                        tests and fallbacks.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Stringer / codegen for enums</td>
+                      <td>Readable and efficient enum printing</td>
+                      <td>
+                        <pre class="code">
+//go:generate stringer -type=State\n</pre
+                        >
+                      </td>
+                      <td>
+                        Generated String() reduces human errors; keep in repo or
+                        generated at build.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Programmatic go list and module analysis</td>
+                      <td>Build repo-aware tools and dependency checks</td>
+                      <td><pre class="code">go list -json ./... | jq</pre></td>
+                      <td>
+                        Useful to find version skew and replace directives.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Plugins for runtime extension</td>
+                      <td>Hot-loadable features in controlled environments</td>
+                      <td>
+                        <pre class="code">
+p, _ := plugin.Open(\"mod.so\")\nsym, _ := p.Lookup(\"Make\")\n</pre
+                        >
+                      </td>
+                      <td>
+                        Linux-only and version-sensitive; prefer RPC for
+                        portability.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section id="perf" class="box section-title">
+              <h2 class="title is-4">Performance-critical Go — Deep Dive</h2>
+              <p>
+                Low-level performance techniques for CPU, memory, and
+                latency-sensitive systems.
+              </p>
+              <div class="table-container">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                  <thead>
+                    <tr>
+                      <th>Technique</th>
+                      <th>Why It Matters</th>
+                      <th>Example</th>
+                      <th>Notes / Caveats</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Escape analysis & stack allocation</td>
+                      <td>Avoid unnecessary heap allocations</td>
+                      <td>
+                        <pre class="code">
+go build -gcflags=-m\nrefactor to keep objects stack-allocated</pre
+                        >
+                      </td>
+                      <td>
+                        Small refactors can change escape behavior; validate
+                        with -m.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Struct layout for cache friendliness</td>
+                      <td>Improve memory density and cache performance</td>
+                      <td>
+                        <pre class="code">
+group 64-bit fields, then 32-bit fields</pre
+                        >
+                      </td>
+                      <td>
+                        Measure with benchmarks; layout depends on architecture.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Read-copy-update (RCU) via atomic swaps</td>
+                      <td>Lock-free reads with copy-on-write updates</td>
+                      <td>
+                        <pre class="code">
+new := &T{...}; atomic.StorePointer(&ptr, unsafe.Pointer(new))\nold := (*T)(atomic.LoadPointer(&ptr))\n</pre
+                        >
+                      </td>
+                      <td>
+                        Writers pay copy cost; readers get cheap access. Memory
+                        grows until old copies GC'd.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Shard counters & per-cpu structures</td>
+                      <td>Eliminate contention on global counters</td>
+                      <td>
+                        <pre class="code">
+shards := make([]uint64, N)\nidx := runtime_procPin() % N; atomic.AddUint64(&shards[idx], 1)\n</pre
+                        >
+                      </td>
+                      <td>
+                        Sum across shards when reading; choose N as small
+                        multiple of CPU cores.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Atomic.Value for config swapping</td>
+                      <td>
+                        Low-latency, contention-free reads with safe updates
+                      </td>
+                      <td>
+                        <pre class="code">
+var v atomic.Value\nv.Store(cfg)\ncfg := v.Load().(*Config)\n</pre
+                        >
+                      </td>
+                      <td>
+                        Store full value; updates must replace entire object to
+                        avoid races.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>pprof-driven optimization</td>
+                      <td>Target real hotspots instead of guessing</td>
+                      <td>
+                        <pre class="code">
+go test -bench . -benchmem; pprof -http=:8080 cpu.prof</pre
+                        >
+                      </td>
+                      <td>
+                        Always profile in production-like workload for
+                        meaningful results.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Inline heuristics for hot paths</td>
+                      <td>
+                        Reduce call overhead by enabling compiler inlining
+                      </td>
+                      <td>
+                        <pre class="code">
+keep functions small; avoid interface calls in hot loops</pre
+                        >
+                      </td>
+                      <td>
+                        Check inlining with -m; restructure to help compiler
+                        inline.
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>Minimize allocations in serialization</td>
+                      <td>Reduce GC churn across RPC boundaries</td>
+                      <td>
+                        <pre class="code">
+use preallocated buffers, io.WriteTo patterns</pre
+                        >
+                      </td>
+                      <td>
+                        Consider binary formats and buffer pooling with
+                        sync.Pool.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section id="downloads" class="box section-title">
+              <h2 class="title is-5">Downloads</h2>
+              <p>
+                I hope these reference tables are helpful for your Go
+                programming journey.
+              </p>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
